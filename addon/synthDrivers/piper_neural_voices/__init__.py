@@ -42,6 +42,8 @@ from pysbd import Segmenter
 sys.path.remove(_LIB_PATH)
 
 
+SENTENCE_SPLIT_THRESHOLD = 50
+
 
 import addonHandler
 addonHandler.initTranslation()
@@ -146,15 +148,25 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def speak(self, speechSequence):
         for item in speechSequence:
             if isinstance(item, str):
-                for sentence in self._segmenter.segment(item):
+                if len(item) < SENTENCE_SPLIT_THRESHOLD:
                     self._bgQueue.put(
                         ProcessPiperTask(
-                            self.tts.create_speech_task(sentence),
+                            self.tts.create_speech_task(item),
                             self._player,
                             self._on_index_reached,
                             self._silence_event.is_set
                         )
                     )
+                else:
+                    for sentence in self._segmenter.segment(item):
+                        self._bgQueue.put(
+                            ProcessPiperTask(
+                                self.tts.create_speech_task(sentence),
+                                self._player,
+                                self._on_index_reached,
+                                self._silence_event.is_set
+                            )
+                        )
             elif isinstance(item, IndexCommand):
                 self._bgQueue.put(partial(self._on_index_reached, item.index))
             elif isinstance(item, BreakCommand):
@@ -236,6 +248,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 self._segmenter = Segmenter(language=lang, clean=False)
             except ValueError:
                 log.exception(f"Sentence segmenter does not support the voice language `{lang}`", exc_info=True)
+                self._segmenter = Segmenter(clean=False)
 
     def _getAvailableVariants(self):
         rv = OrderedDict()
