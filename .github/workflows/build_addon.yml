@@ -11,6 +11,11 @@ on:
 
   workflow_dispatch:
 
+
+permissions:
+  contents: write
+  discussions: write
+
 jobs:
   build:
 
