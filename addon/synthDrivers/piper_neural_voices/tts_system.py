@@ -27,12 +27,12 @@ _LIB_PATH = os.path.join(
     os.path.abspath(os.path.dirname(__file__)),
     "lib"
 )
-sys.path.insert(0, os.fspath(_LIB_PATH))
+sys.path.insert(0, _LIB_PATH)
 from pathlib import Path
 import numpy as np
 import onnxruntime
 from espeak_phonemizer  import Phonemizer
-del sys.path[0]
+sys.path.remove(_LIB_PATH)
 
 
 NVDA_ESPEAK_DIR = Path(globalVars.appDir).joinpath("synthDrivers")

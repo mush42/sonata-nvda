@@ -5,6 +5,7 @@
 
 from functools import partial
 import os
+import sys
 import threading
 import queue
 import webbrowser
@@ -30,6 +31,16 @@ from .tts_system import (
     AudioTask,
     PIPER_VOICE_SAMPLES_URL
 )
+
+
+_LIB_PATH = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)),
+    "lib"
+)
+sys.path.insert(0, _LIB_PATH)
+from pysbd import Segmenter
+sys.path.remove(_LIB_PATH)
+
 
 
 import addonHandler
@@ -121,6 +132,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self.availableVoices, self.__voice_variants, self.__default_variants = self._get_voices_and_variants()
         self._voice_map = {v.key: v for v in self.voices}
         self.__voice = None
+        self._segmenter = Segmenter(clean=False)
 
     def terminate(self):
         self.cancel()
@@ -134,7 +146,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def speak(self, speechSequence):
         for item in speechSequence:
             if isinstance(item, str):
-                for sentence in item.split("."):
+                for sentence in self._segmenter.segment(item):
                     self._bgQueue.put(
                         ProcessPiperTask(
                             self.tts.create_speech_task(sentence),
@@ -216,8 +228,14 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def _set_variant(self, value):
         voice_key = f"{self.__voice}-{value}"
         self.tts.voice = voice_key
-        sample_rate = self.tts.speech_options.voice.config.sample_rate
-        self._player = self._get_or_create_player(sample_rate)
+        voice = self.tts.speech_options.voice
+        self._player = self._get_or_create_player(voice.config.sample_rate)
+        lang = voice.language.split("-")[0]
+        if self._segmenter.language != lang:
+            try:
+                self._segmenter = Segmenter(language=lang, clean=False)
+            except ValueError:
+                log.exception(f"Sentence segmenter does not support the voice language `{lang}`", exc_info=True)
 
     def _getAvailableVariants(self):
         rv = OrderedDict()
