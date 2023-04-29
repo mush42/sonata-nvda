@@ -196,7 +196,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         except queue.Empty:
             pass
         self._bgQueue.put(
-            DoneSpeaking(self._player, self._on_index_reached, self._silence_event)
+            DoneSpeaking(self._player, self._on_index_reached, self._silence_event.is_set)
         )
         self._bgQueue.put(self._silence_event.clear)
         self._bgQueue.join()
