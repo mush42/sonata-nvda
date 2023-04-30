@@ -202,7 +202,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._bgQueue.join()
 
     def pause(self, switch):
-        self.player.pause(switch)
+        self._player.pause(switch)
 
     def _get_rate(self):
         return self.tts.rate
