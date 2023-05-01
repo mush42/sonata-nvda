@@ -146,6 +146,9 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._bgThread.join()
     
     def speak(self, speechSequence):
+        self._bgQueue.put(
+            DoneSpeaking(self._player, self._on_index_reached, self._silence_event.is_set)
+        )
         for item in speechSequence:
             if isinstance(item, str):
                 if len(item) < SENTENCE_SPLIT_THRESHOLD:
