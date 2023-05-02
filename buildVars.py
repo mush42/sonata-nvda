@@ -25,7 +25,7 @@ addon_info = {
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""Neural voices for NVDA based on Piper"""),
 	# version
-	"addon_version": "1.0-dev",
+	"addon_version": "1.0-alpha",
 	# Author(s)
 	"addon_author": "Musharraf Omer <ibnomer2011@hotmail.com>",
 	# URL for the add-on documentation support
