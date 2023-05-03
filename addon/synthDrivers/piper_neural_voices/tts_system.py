@@ -67,7 +67,7 @@ class SilenceTask(AudioTask):
 
     def generate_audio(self):
         """Generate silence (16-bit mono at sample rate)."""
-        num_samples = int((time_ms / 1000.0) * sample_rate)
+        num_samples = int((time_ms / 1000.0) * self.sample_rate)
         return bytes(num_samples * 2)
 
 
