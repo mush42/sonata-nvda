@@ -1,5 +1,7 @@
 # coding: utf-8
 
+# Copyright (c) 2023 Musharraf Omer
+# This file is covered by the GNU General Public License.
 
 import config
 from io import StringIO
