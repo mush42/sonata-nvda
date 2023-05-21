@@ -1,0 +1,29 @@
+{
+	"addonId": "piper_neural_voices",
+	"displayName": "Piper Neural Voices",
+	"URL": "",
+	"description": "Neural voices for NVDA based on Piper",
+	"sha256": "d26029dac8fcfe680fe3d4595864386d712c58a92f95c8f0563ab6be3699ca14",
+	"homepage": null,
+	"addonVersionName": "1.0-beta",
+	"addonVersionNumber": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"minNVDAVersion": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"lastTestedVersion": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"channel": "stable",
+	"publisher": "",
+	"sourceURL": null,
+	"license": "GPL 2",
+	"licenseURL": null
+}
