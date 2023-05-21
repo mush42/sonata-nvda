@@ -26,7 +26,7 @@ LIB_DIRECTORY = os.path.join(HERE, "lib")
 NVDA_ESPEAK_DIR = os.path.join(globalVars.appDir, "synthDrivers")
 os.environ["PIPER_ESPEAKNG_DATA_DIRECTORY"] = os.fspath(NVDA_ESPEAK_DIR)
 os.environ["ORT_DYLIB_PATH"] = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "lib", "onnxruntime.dll")
+    os.path.join(os.path.dirname(__file__), "lib", "onnxruntime", "onnxruntime.dll")
 )
 
 
@@ -40,7 +40,7 @@ sys.path.remove(LIB_DIRECTORY)
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
 PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices")
 
-FALLBACK_SPEAKER_NAME = "Default"
+FALLBACK_SPEAKER_NAME = "default"
 DEFAULT_RATE = 50
 DEFAULT_VOLUME = 100
 DEFAULT_PITCH = 50
@@ -127,11 +127,11 @@ class PiperVoice:
 
 
 class SpeechOptions:
-    __slots__ = ["voice", "_speaker", "rate", "volume", "pitch"]
+    __slots__ = ["voice", "speaker", "rate", "volume", "pitch"]
 
     def __init__(self, voice, speaker=None, rate=None, volume=None, pitch=None):
         self.voice = voice
-        self._speaker = speaker
+        self.speaker = speaker
         self.rate = rate
         self.volume = volume
         self.pitch = pitch
@@ -141,19 +141,7 @@ class SpeechOptions:
         if voice.is_multi_speaker:
             self.speaker = voice.default_speaker
         else:
-            self.speaker = FALLBACK_SPEAKER_NAME
-
-    @property
-    def speaker(self):
-        return self._speaker
-
-    @speaker.setter
-    def speaker(self, new_spaeker):
-        if not self.voice.is_multi_speaker:
-            self._speaker = FALLBACK_SPEAKER_NAME
-        elif new_spaeker not in self.voice.speakers:
-            raise SpeakerNotFoundError(f"Speaker `{new_spaeker}` not found for voice `{self.voice.name}`.")
-        self._speaker = new_spaeker
+            self.speaker = None
 
     def copy(self):
         return copy.copy(self)
@@ -225,10 +213,14 @@ class PiperTextToSpeechSystem:
         """Get the current speaker"""
         return self.speech_options.speaker or FALLBACK_SPEAKER_NAME
 
-    @voice.setter
+    @speaker.setter
     def speaker(self, new_speaker: str):
-        if new_speaker != FALLBACK_SPEAKER_NAME:
+        if new_speaker == FALLBACK_SPEAKER_NAME:
+            return
+        if new_speaker in self.speech_options.voice.speakers:
             self.speech_options.speaker = new_speaker
+        else:
+            raise SpeakerNotFoundError(f"Speaker `{new_speaker}` was not found")
 
     @property
     def language(self) -> str:
@@ -238,10 +230,18 @@ class PiperTextToSpeechSystem:
     @language.setter
     def language(self, new_language: str):
         """Set the current voice language"""
+        lang = self.normalize_language(new_language)
+        lang_code = lang.split("-")[0] + "-"
+        possible_voices = []
         for voice in self.voices:
-            if voice.language == new_language:
+            if voice.language == lang:
                 self.speech_options.set_voice(voice)
                 return
+            elif voice.language.startswith(lang_code):
+                possible_voices.append(voice)
+        if possible_voices:
+            self.speech_options.set_voice(possible_voices[0])
+            return
         raise VoiceNotFoundError(
             f"A voice with the given language `{new_language}` was not found"
         )
@@ -280,15 +280,24 @@ class PiperTextToSpeechSystem:
         return self.voices
 
     def get_speakers(self):
-        if self.speech_options.voice.is_multi_speaker:
-            return [FALLBACK_SPEAKER_NAME, *self.speech_options.voice.speakers]
-        return [FALLBACK_SPEAKER_NAME,]
+        speakers = list(self.speech_options.voice.speakers)
+        return [FALLBACK_SPEAKER_NAME, *speakers]
 
     def create_speech_task(self, text):
         return PiperSpeechSynthesisTask(text, self.speech_options.copy())
 
     def create_break_task(self, time_ms):
         return SilenceTask(time_ms, self.speech_options.voice.config.sample_rate)
+
+    @staticmethod
+    def normalize_language(language):
+        language = language.replace("_", "-")
+        lang, *localename = language.split("-")
+        if not localename:
+            return lang
+        else:
+            localename = localename[0].upper()
+            return "-".join([lang, localename])
 
     @classmethod
     def load_piper_voices_from_nvda_config_dir(cls):
@@ -306,7 +315,7 @@ class PiperTextToSpeechSystem:
             if match is None:
                 continue
             info = match.groupdict()
-            language = info["language"]
+            language = cls.normalize_language(info["language"])
             name = info["name"]
             quality = info["quality"]
             rv.append(
@@ -322,7 +331,7 @@ class PiperTextToSpeechSystem:
         return rv
 
     @classmethod
-    def install_voice(voice_archive_path, dest_dir):
+    def install_voice(cls, voice_archive_path, dest_dir):
         """Uniform handleing of voice tar archives."""
         archive_path = Path(voice_archive_path)
         voice_name = archive_path.name.rstrip("".join(archive_path.suffixes))
@@ -347,6 +356,12 @@ class PiperTextToSpeechSystem:
             dst.mkdir(parents=True, exist_ok=True)
             tar.extract(m_onnx_model, path=os.fspath(dst), set_attrs=False)
             tar.extract(m_model_config, path=os.fspath(dst), set_attrs=False)
+            try:
+                m_model_card = next(m for m in members if m.name.endswith("MODEL_CARD"))
+            except stopIteration:
+                pass
+            else:
+                tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
             return voice_key
 
 
@@ -379,3 +394,4 @@ class PiperConfig:
                 phoneme_id_map=config_dict["phoneme_id_map"],
                 speaker_id_map=config_dict["speaker_id_map"],
             )
+
