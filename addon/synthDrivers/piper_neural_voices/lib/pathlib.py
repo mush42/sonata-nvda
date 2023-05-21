@@ -6,12 +6,13 @@ import os
 import posixpath
 import re
 import sys
-from _collections_abc import Sequence
-from errno import EINVAL, ENOENT, ENOTDIR, EBADF, ELOOP
+from errno import EBADF, EINVAL, ELOOP, ENOENT, ENOTDIR
 from operator import attrgetter
-from stat import S_ISDIR, S_ISLNK, S_ISREG, S_ISSOCK, S_ISBLK, S_ISCHR, S_ISFIFO
+from stat import (S_ISBLK, S_ISCHR, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG,
+                  S_ISSOCK)
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
+from _collections_abc import Sequence
 
 supports_symlinks = True
 if os.name == "nt":

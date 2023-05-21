@@ -3,54 +3,35 @@
 # Copyright (c) 2023 Musharraf Omer
 # This file is covered by the GNU General Public License.
 
-from functools import partial
-import os
+import queue
 import sys
 import threading
-import queue
 import webbrowser
 from collections import OrderedDict
+from functools import partial
 
 import config
-import synthDriverHandler
 import languageHandler
 import nvwave
+import synthDriverHandler
 from logHandler import log
-from synthDriverHandler import synthDoneSpeaking, SynthDriver, synthIndexReached, VoiceInfo
-from speech.commands import (
-    BreakCommand,
-    CharacterModeCommand,
-    IndexCommand,
-    LangChangeCommand,
-    RateCommand,
-    VolumeCommand
-)
+from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
+                             LangChangeCommand, RateCommand, VolumeCommand)
+from synthDriverHandler import (SynthDriver, VoiceInfo, synthDoneSpeaking,
+                                synthIndexReached)
 
-from .tts_system import (
-    PiperTextToSpeechSystem,
-    AudioTask,
-    PIPER_VOICE_SAMPLES_URL
-)
-
-
-_LIB_PATH = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)),
-    "lib"
-)
-sys.path.insert(0, _LIB_PATH)
-from pysbd import Segmenter
-sys.path.remove(_LIB_PATH)
-
-
-SENTENCE_SPLIT_THRESHOLD = 50
+from .tts_system import (PIPER_VOICE_SAMPLES_URL, AudioTask,
+                         PiperTextToSpeechSystem, SilenceTask)
 
 
 import addonHandler
+
 addonHandler.initTranslation()
 
 
-class ProcessPiperTask:
-    __slots__ = ["task", "player", "on_index_reached", "is_canceled"]
+
+class ProcessSpeechTask:
+    __slots__ = ["task", "player", "on_index_reached", "is_canceled",]
 
     def __init__(self, task, player, on_index_reached, is_canceled):
         self.task = task
@@ -59,8 +40,17 @@ class ProcessPiperTask:
         self.is_canceled = is_canceled
 
     def __call__(self):
-        if not self.is_canceled():
-            self.player.feed(self.task.generate_audio())
+        if self.is_canceled():
+            return
+        speech_iter = self.task.generate_audio()
+        while True:
+            try:
+                if self.is_canceled():
+                    break
+                wave_samples = next(speech_iter)
+                self.player.feed(wave_samples.get_wave_bytes())
+            except StopIteration:
+                break
 
 
 class DoneSpeaking:
@@ -79,7 +69,6 @@ class DoneSpeaking:
 
 
 class BgThread(threading.Thread):
-
     def __init__(self, bgQueue):
         super().__init__()
         self._bgQueue = bgQueue
@@ -106,35 +95,39 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         SynthDriver.VariantSetting(),
         SynthDriver.RateSetting(),
         SynthDriver.VolumeSetting(),
+        SynthDriver.PitchSetting(),
+        SynthDriver.RateBoostSetting(),
     )
     supportedCommands = {
         IndexCommand,
-        BreakCommand,
+        #BreakCommand,
         # RateCommand,
         # VolumeCommand
     }
     supportedNotifications = {synthIndexReached, synthDoneSpeaking}
 
-    description='Piper Neural Voices'
-    name='piper_neural_voices'
+    description = "Piper Neural Voices"
+    name = "piper_neural_voices"
 
     @classmethod
     def check(cls):
         return any(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir())
 
     def __init__(self):
+        super().__init__()
+        self._rateBoost = False
         self.voices = PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir()
         self.tts = PiperTextToSpeechSystem(self.voices)
         self._bgQueue = queue.Queue()
         self._bgThread = BgThread(self._bgQueue)
         self._silence_event = threading.Event()
         self._players = {}
-        self._player = self._get_or_create_player(self.tts.speech_options.voice.config.sample_rate)
+        self._player = self._get_or_create_player(
+            self.tts.speech_options.voice.config.sample_rate
+        )
+        self.availableVoices = self._get_voices()
         self.availableLanguages = {v.language for v in self.voices}
-        self.availableVoices, self.__voice_variants, self.__default_variants = self._get_voices_and_variants()
         self._voice_map = {v.key: v for v in self.voices}
-        self.__voice = None
-        self._segmenter = Segmenter(clean=False)
 
     def terminate(self):
         self.cancel()
@@ -144,48 +137,28 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._bgQueue.put(self._players.clear)
         self._bgQueue.put(None)
         self._bgThread.join()
-    
+
     def speak(self, speechSequence):
         self._bgQueue.put(
-            DoneSpeaking(self._player, self._on_index_reached, self._silence_event.is_set)
+            DoneSpeaking(
+                self._player, self._on_index_reached, self._silence_event.is_set
+            )
         )
-        for item in speechSequence:
+        for item in self.combine_adjacent_strings(speechSequence):
             if isinstance(item, str):
-                if len(item) < SENTENCE_SPLIT_THRESHOLD:
-                    self._bgQueue.put(
-                        ProcessPiperTask(
-                            self.tts.create_speech_task(item),
-                            self._player,
-                            self._on_index_reached,
-                            self._silence_event.is_set
-                        )
-                    )
-                else:
-                    for sentence in self._segmenter.segment(item):
-                        self._bgQueue.put(
-                            ProcessPiperTask(
-                                self.tts.create_speech_task(sentence),
-                                self._player,
-                                self._on_index_reached,
-                                self._silence_event.is_set
-                            )
-                        )
-            elif isinstance(item, IndexCommand):
-                self._bgQueue.put(partial(self._on_index_reached, item.index))
-            elif isinstance(item, BreakCommand):
                 self._bgQueue.put(
-                    ProcessPiperTask(
-                        self.tts.create_break_task(item.time),
+                    ProcessSpeechTask(
+                        self.tts.create_speech_task(item),
                         self._player,
                         self._on_index_reached,
-                        self._silence_event.is_set
+                        self._silence_event.is_set,
                     )
                 )
+            elif isinstance(item, IndexCommand):
+                self._bgQueue.put(partial(self._on_index_reached, item.index))
         self._bgQueue.put(
             DoneSpeaking(
-                self._player,
-                self._on_index_reached,
-                self._silence_event.is_set
+                self._player, self._on_index_reached, self._silence_event.is_set
             )
         )
 
@@ -199,7 +172,9 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         except queue.Empty:
             pass
         self._bgQueue.put(
-            DoneSpeaking(self._player, self._on_index_reached, self._silence_event.is_set)
+            DoneSpeaking(
+                self._player, self._on_index_reached, self._silence_event.is_set
+            )
         )
         self._bgQueue.put(self._silence_event.clear)
         self._bgQueue.join()
@@ -207,11 +182,28 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def pause(self, switch):
         self._player.pause(switch)
 
+    def _get_rateBoost(self):
+        return self._rateBoost
+
+    def _set_rateBoost(self, enable):
+        if enable != self._rateBoost:
+            rate = self.rate
+            self._rateBoost = enable
+            self.rate = rate
+
     def _get_rate(self):
-        return self.tts.rate
+        if self._rateBoost:
+            return self.tts.rate
+        else:
+            if self.tts.rate > 40:
+                self.tts.rate = 40
+            return int(self.tts.rate * 2.5)
 
     def _set_rate(self, value):
-        self.tts.rate = value
+        if self._rateBoost:
+            self.tts.rate = value
+        else:
+            self.tts.rate = int(self._percentToParam(value, 0, 40))
 
     def _get_volume(self):
         return self.tts.volume
@@ -219,17 +211,17 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def _set_volume(self, value):
         self.tts.volume = value
 
+    def _get_pitch(self):
+        return self.tts.pitch
+
+    def _set_pitch(self, value):
+        self.tts.pitch = value
+
     def _get_voice(self):
-        return self._get_variant_independent_voice_id(self.tts.voice)
+        return self.tts.voice
 
     def _set_voice(self, value):
-        self.__voice = value
-        if hasattr(self, "_availableVariants"):
-            del self._availableVariants
-        variant = self.variant
-        if f"{value}-{variant}" not in self._voice_map:
-            variant = self.__default_variants[value]
-        self._set_variant(variant)
+        self.tts.voice = value
 
     def _get_language(self):
         return self.tts.language
@@ -238,30 +230,14 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self.tts.language = value
 
     def _get_variant(self):
-        return self.tts.voice.split("-")[-1]
+        return "Default"
+        return self.tts.speaker
 
     def _set_variant(self, value):
-        voice_key = f"{self.__voice}-{value}"
-        self.tts.voice = voice_key
-        voice = self.tts.speech_options.voice
-        self._player = self._get_or_create_player(voice.config.sample_rate)
-        lang = voice.language.split("-")[0]
-        if self._segmenter.language != lang:
-            try:
-                self._segmenter = Segmenter(language=lang, clean=False)
-            except ValueError:
-                log.exception(f"Sentence segmenter does not support the voice language `{lang}`", exc_info=True)
-                self._segmenter = Segmenter(clean=False)
+        self.tts.speaker = value
 
     def _getAvailableVariants(self):
-        rv = OrderedDict()
-        for (quality, vinfo) in self.__voice_variants[self.voice].items():
-            rv[quality] = VoiceInfo(
-                quality,
-                quality.title(),
-                vinfo.language
-            )
-        return rv
+        return {"Default": VoiceInfo("Default", "Default", None)}
 
     def _on_index_reached(self, index):
         if index is not None:
@@ -269,22 +245,15 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         else:
             synthDoneSpeaking.notify(synth=self)
 
-    def _get_variant_independent_voice_id(self, voice_key):
-        return "-".join(voice_key.split("-")[:-1])
-
-    def _get_voices_and_variants(self):
+    def _get_voices(self):
         all_voices = OrderedDict()
-        all_variants = OrderedDict()
-        default_variants = {}
         for voice in self.voices:
-            voice_id = self._get_variant_independent_voice_id(voice.key)
+            voice_id = voice.key
             quality = voice.properties["quality"]
             lang = languageHandler.normalizeLanguage(voice.language).replace("_", "-")
-            display_name =  f"{voice.name} ({lang})"
+            display_name = f"{voice.name} ({lang}) - {quality}"
             all_voices[voice_id] = VoiceInfo(voice_id, display_name, voice.language)
-            all_variants.setdefault(voice_id, {})[quality] = VoiceInfo(quality, quality.title(), voice.language)
-            default_variants.setdefault(voice_id, quality)
-        return all_voices, all_variants, default_variants
+        return all_voices
 
     def _get_or_create_player(self, sample_rate):
         if sample_rate not in self._players:
@@ -293,6 +262,22 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 samplesPerSec=sample_rate,
                 bitsPerSample=16,
                 outputDevice=config.conf["speech"]["outputDevice"],
-                buffered=True
+                buffered=True,
             )
         return self._players[sample_rate]
+
+    def combine_adjacent_strings(self, lst):
+        """Taken from IBMTTS add-on."""
+        result = []
+        current_string = ""
+        for item in lst:
+            if isinstance(item, str):
+                current_string += item
+            else:
+                if current_string:
+                    result.append(current_string)
+                    current_string = ""
+                result.append(item)
+        if current_string:
+            result.append(current_string)
+        return result
