@@ -26,7 +26,7 @@ LIB_DIRECTORY = os.path.join(HERE, "lib")
 NVDA_ESPEAK_DIR = os.path.join(globalVars.appDir, "synthDrivers")
 os.environ["PIPER_ESPEAKNG_DATA_DIRECTORY"] = os.fspath(NVDA_ESPEAK_DIR)
 os.environ["ORT_DYLIB_PATH"] = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "lib", "onnxruntime", "onnxruntime.dll")
+    os.path.join(os.path.dirname(__file__), "lib", "onnxruntime.dll")
 )
 
 
