@@ -13,7 +13,6 @@ import webbrowser
 import wx
 from wx.adv import CommandLinkButton
 
-import config
 import core
 import gui
 import globalPluginHandler
@@ -143,7 +142,11 @@ class SettingsPanel(gui.SettingsPanel):
             self.voices_list.set_focused_item(0)
             return
         voice_id = "-".join(selected.key.split("-")[:-1])
-        if ("piper_neural_voices" in config.conf["speech"]) and (config.conf["speech"]["piper_neural_voices"]["voice"] == voice_id):
+        synth = synthDriverHandler.getSynth()
+        if (
+            (synth.name == "piper_neural_voices")
+            and (synth.voice == voice_id)
+        ):
             gui.messageBox(
                 # Translators: message in a message box
                 _("You cannot remove the currently active voice. We're all good citizens, right?!"),
@@ -182,7 +185,7 @@ class SettingsPanel(gui.SettingsPanel):
                     _("Done"),
                     style=wx.ICON_INFORMATION
                 )
-                self.update_voices_list(set_focus=True)
+                self.update_voices_list(set_focus=True, invalidate_synth_voices_cache=True)
 
     def _on_install_voice_from_tar(self, event):
         openFileDialog = wx.FileDialog(
@@ -222,14 +225,14 @@ class SettingsPanel(gui.SettingsPanel):
             gui.messageBox(
                 # Translators: message telling the user that installing the voice is successful
                 _(
-                    "Voice {voice} has been installed successfully. Restart NVDA to refresh the voices list."
+                    "Voice {voice} has been installed successfully."
                 ).format(voice=voice_key),
                 _("Voice installed successfully"),
                 style=wx.ICON_INFORMATION,
             )
-            self.update_voices_list(set_focus=True)
+            self.update_voices_list(set_focus=True, invalidate_synth_voices_cache=True)
 
-    def update_voices_list(self, set_focus=True):
+    def update_voices_list(self, set_focus=True, invalidate_synth_voices_cache=False):
         voices = list(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir())
         enable = bool(voices)
         self.model_card_button.Enable(enable)
@@ -238,6 +241,10 @@ class SettingsPanel(gui.SettingsPanel):
         self.voices_list.set_objects(voices, set_focus=set_focus)
         if "piper" in synthDriverHandler.getSynth().name.lower():
             self.remove_voice_button.Enable(len(voices) >= 2)
+        if invalidate_synth_voices_cache:
+            synth = synthDriverHandler.getSynth()
+            synth.__init__()
+
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
