@@ -241,9 +241,10 @@ class SettingsPanel(gui.SettingsPanel):
         self.voices_list.set_objects(voices, set_focus=set_focus)
         if "piper" in synthDriverHandler.getSynth().name.lower():
             self.remove_voice_button.Enable(len(voices) >= 2)
-        if invalidate_synth_voices_cache:
-            synth = synthDriverHandler.getSynth()
-            synth.__init__()
+            if invalidate_synth_voices_cache:
+                synth = synthDriverHandler.getSynth()
+                synth.terminate()
+                synth.__init__()
 
 
 
