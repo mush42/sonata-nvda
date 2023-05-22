@@ -31,7 +31,6 @@ os.environ["ORT_DYLIB_PATH"] = os.path.abspath(
 
 
 sys.path.insert(0, LIB_DIRECTORY)
-from bidict import FrozenOrderedBidict
 from pathlib import Path
 from pyper import Piper as PiperModel, SynthConfig, AudioOutputConfig
 sys.path.remove(LIB_DIRECTORY)
@@ -90,9 +89,11 @@ class PiperVoice:
             raise RuntimeError(
                 f"Could not load voice from `{os.fspath(self.location)}`"
             )
+        self.model = PiperModel(
+            os.fspath(self.config_path), os.fspath(self.model_path)
+        )
         self.config = PiperConfig.load_from_json_file(self.config_path)
-        self.__piper_model = None
-        self.speakers = FrozenOrderedBidict(self.config.speaker_id_map)
+        self.speakers = self.config.speaker_id_map
 
     @property
     def is_multi_speaker(self):
@@ -101,20 +102,13 @@ class PiperVoice:
     @property
     def default_speaker(self):
         try:
-            return self.speakers.inv[0]
+            rev_speaker_map = { v: k for (k, v) in self.speakers.items() }
+            return rev_speaker_map[0]
         except KeyError:
             try:
                 return next(iter(self.speakers))
             except StopIteration:
                 raise SpeakerNotFoundError(f"Voice `{self.name}` has no speakers")
-
-    @property
-    def model(self):
-        if self.__piper_model is None:
-            self.__piper_model = PiperModel(
-                os.fspath(self.config_path), os.fspath(self.model_path)
-            )
-        return self.__piper_model
 
     def synthesize(self, text, speaker, rate, volume, pitch):
         synth_config = SynthConfig(speaker=speaker)
