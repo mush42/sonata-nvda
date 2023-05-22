@@ -13,6 +13,7 @@ import webbrowser
 import wx
 from wx.adv import CommandLinkButton
 
+import config
 import core
 import gui
 import globalPluginHandler
@@ -117,6 +118,7 @@ class SettingsPanel(gui.SettingsPanel):
         selected = self.voices_list.get_selected()
         if selected is None:
             self.voices_list.set_focused_item(0)
+            return
         model_card_file = os.path.join(selected.location, "MODEL_CARD")
         if os.path.exists(model_card_file):
             with open(model_card_file, "r", encoding="utf-8") as file:
@@ -139,6 +141,17 @@ class SettingsPanel(gui.SettingsPanel):
         selected = self.voices_list.get_selected()
         if selected is None:
             self.voices_list.set_focused_item(0)
+            return
+        voice_id = "-".join(selected.key.split("-")[:-1])
+        if ("piper_neural_voices" in config.conf["speech"]) and (config.conf["speech"]["piper_neural_voices"]["voice"] == voice_id):
+            gui.messageBox(
+                # Translators: message in a message box
+                _("You cannot remove the currently active voice. We're all good citizens, right?!"),
+                # Translators: title of a message box
+                _("Warning"),
+                style=wx.ICON_WARNING
+            )
+            return
         retval = gui.messageBox(
             # Translators: message in a message box
             _(
