@@ -352,7 +352,7 @@ class PiperTextToSpeechSystem:
             tar.extract(m_model_config, path=os.fspath(dst), set_attrs=False)
             try:
                 m_model_card = next(m for m in members if m.name.endswith("MODEL_CARD"))
-            except stopIteration:
+            except StopIteration:
                 pass
             else:
                 tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
