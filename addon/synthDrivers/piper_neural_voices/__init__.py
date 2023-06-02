@@ -66,7 +66,7 @@ class ProcessBreakTask:
 
     def __call__(self):
         if not self.is_canceled():
-            self._player.feed(self.task.generate_audio())
+            self.player.feed(self.task.generate_audio())
 
 
 class DoneSpeaking:
