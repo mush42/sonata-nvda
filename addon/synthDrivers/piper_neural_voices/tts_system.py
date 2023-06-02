@@ -32,7 +32,7 @@ os.environ["ORT_DYLIB_PATH"] = os.path.abspath(
 
 sys.path.insert(0, LIB_DIRECTORY)
 from pathlib import Path
-from pyper import Piper as PiperModel, SynthConfig, AudioOutputConfig
+from pyper import Piper, VitsModel, AudioOutputConfig
 sys.path.remove(LIB_DIRECTORY)
 
 
@@ -89,9 +89,10 @@ class PiperVoice:
             raise RuntimeError(
                 f"Could not load voice from `{os.fspath(self.location)}`"
             )
-        self.model = PiperModel(
+        self.vits_model = VitsModel(
             os.fspath(self.config_path), os.fspath(self.model_path)
         )
+        self.synth = Piper.with_vits(self.vits_model)
         self.config = PiperConfig.load_from_json_file(self.config_path)
         self.speakers = self.config.speaker_id_map
 
@@ -111,13 +112,14 @@ class PiperVoice:
                 raise SpeakerNotFoundError(f"Voice `{self.name}` has no speakers")
 
     def synthesize(self, text, speaker, rate, volume, pitch):
-        synth_config = SynthConfig(speaker=speaker)
+        if self.vits_model.speaker != speaker:
+            self.vits_model.speaker = speaker
         audio_output_config = AudioOutputConfig(
             rate=rate,
             volume=volume,
             pitch=pitch
         )
-        return self.model.synthesize_batched(text, synth_config=synth_config, audio_output_config=audio_output_config, batch_size=6)
+        return self.synth.synthesize_batched(text, audio_output_config=audio_output_config, batch_size=4)
 
 
 class SpeechOptions:
