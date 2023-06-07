@@ -109,7 +109,7 @@ class PiperVoice:
             volume=volume,
             pitch=pitch
         )
-        return self.synth.synthesize_batched(text, audio_output_config=audio_output_config, batch_size=8)
+        return self.synth.synthesize_batched(text.strip(), audio_output_config=audio_output_config, batch_size=12)
 
 
 class SpeechOptions:
