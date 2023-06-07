@@ -155,7 +155,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._silence_event = threading.Event()
         self._players = {}
         self._player = self._get_or_create_player(
-            self.tts.speech_options.voice.config.sample_rate
+            self.tts.speech_options.voice.sample_rate
         )
         self.availableLanguages = {v.language for v in self.voices}
         self._voice_map = {v.key: v for v in self.voices}
@@ -340,7 +340,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             PiperConfig.setdefault(self.voice, {})["variant"] = variant
             self._set_variant(variant)
         voice = self.tts.speech_options.voice
-        self._player = self._get_or_create_player(voice.config.sample_rate)
+        self._player = self._get_or_create_player(voice.sample_rate)
 
     def _getAvailableVariants(self):
         rv = OrderedDict()

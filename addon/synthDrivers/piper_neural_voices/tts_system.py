@@ -5,7 +5,6 @@
 
 import copy
 import io
-import json
 import operator
 import os
 import re
@@ -93,33 +92,24 @@ class PiperVoice:
             os.fspath(self.config_path), os.fspath(self.model_path)
         )
         self.synth = Piper.with_vits(self.vits_model)
-        self.config = PiperConfig.load_from_json_file(self.config_path)
-        self.speakers = self.config.speaker_id_map
-
-    @property
-    def is_multi_speaker(self):
-        return bool(self.speakers)
-
-    @property
-    def default_speaker(self):
-        try:
-            rev_speaker_map = { v: k for (k, v) in self.speakers.items() }
-            return rev_speaker_map[0]
-        except KeyError:
-            try:
-                return next(iter(self.speakers))
-            except StopIteration:
-                raise SpeakerNotFoundError(f"Voice `{self.name}` has no speakers")
+        self.sample_rate = self.vits_model.get_wave_output_info().sample_rate
+        self.speakers = self.vits_model.speakers
+        self.is_multi_speaker = bool(self.speakers)
+        if self.is_multi_speaker:
+            self.default_speaker = self.speakers[0]
+        else:
+            self.default_speaker = None
 
     def synthesize(self, text, speaker, rate, volume, pitch):
-        if self.vits_model.speaker != speaker:
-            self.vits_model.speaker = speaker
+        if self.is_multi_speaker:
+            if self.vits_model.speaker != speaker:
+                self.vits_model.speaker = speaker
         audio_output_config = AudioOutputConfig(
             rate=rate,
             volume=volume,
             pitch=pitch
         )
-        return self.synth.synthesize_batched(text, audio_output_config=audio_output_config, batch_size=4)
+        return self.synth.synthesize_batched(text, audio_output_config=audio_output_config, batch_size=8)
 
 
 class SpeechOptions:
@@ -276,14 +266,16 @@ class PiperTextToSpeechSystem:
         return self.voices
 
     def get_speakers(self):
-        speakers = list(self.speech_options.voice.speakers)
-        return [FALLBACK_SPEAKER_NAME, *speakers]
+        if self.speech_options.voice.is_multi_speaker:
+            return self.speech_options.voice.speakers
+        else:
+            return [FALLBACK_SPEAKER_NAME, ]
 
     def create_speech_task(self, text):
         return PiperSpeechSynthesisTask(text, self.speech_options.copy())
 
     def create_break_task(self, time_ms):
-        return SilenceTask(time_ms, self.speech_options.voice.config.sample_rate)
+        return SilenceTask(time_ms, self.speech_options.voice.sample_rate)
 
     @staticmethod
     def normalize_language(language):
@@ -359,35 +351,4 @@ class PiperTextToSpeechSystem:
             else:
                 tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
             return voice_key
-
-
-@dataclass
-class PiperConfig:
-    num_symbols: int
-    num_speakers: int
-    sample_rate: int
-    espeak_voice: str
-    length_scale: float
-    noise_scale: float
-    noise_w: float
-    phoneme_id_map: Mapping[str, Sequence[int]]
-    speaker_id_map: Mapping[str, int]
-
-    @classmethod
-    def load_from_json_file(cls, config_path: Union[str, Path]):
-        with open(config_path, "r", encoding="utf-8") as config_file:
-            config_dict = json.load(config_file)
-            inference = config_dict.get("inference", {})
-
-            return cls(
-                num_symbols=config_dict["num_symbols"],
-                num_speakers=config_dict["num_speakers"],
-                sample_rate=config_dict["audio"]["sample_rate"],
-                espeak_voice=config_dict["espeak"]["voice"],
-                noise_scale=inference.get("noise_scale", 0.667),
-                length_scale=inference.get("length_scale", 1.0),
-                noise_w=inference.get("noise_w", 0.8),
-                phoneme_id_map=config_dict["phoneme_id_map"],
-                speaker_id_map=config_dict["speaker_id_map"],
-            )
 
