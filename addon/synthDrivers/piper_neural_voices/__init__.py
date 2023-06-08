@@ -10,6 +10,7 @@ import webbrowser
 from collections import OrderedDict
 from contextlib import suppress
 from functools import partial
+from itertools import zip_longest
 
 import config
 import languageHandler
@@ -17,6 +18,7 @@ import nvwave
 import synthDriverHandler
 from autoSettingsUtils.driverSetting import DriverSetting
 from logHandler import log
+from speech.sayAll import SayAllHandler
 from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
                              LangChangeCommand, RateCommand, VolumeCommand, PitchCommand)
 from synthDriverHandler import (SynthDriver, VoiceInfo, synthDoneSpeaking,
@@ -31,6 +33,10 @@ import addonHandler
 
 addonHandler.initTranslation()
 
+
+
+class _EndOfSpeechSequence:
+    """Marker type to denote the end of speech sequence."""
 
 
 class ProcessSpeechTask:
@@ -52,6 +58,34 @@ class ProcessSpeechTask:
                 self.player.idle()
                 wave_samples = next(speech_iter)
                 self.player.feed(wave_samples.get_wave_bytes())
+            except StopIteration:
+                break
+
+
+class ProcessSpeechTaskSayAll:
+    __slots__ = ["task", "speech_idx", "player", "is_canceled", "on_index_reached",]
+
+    def __init__(self, task, speech_idx, player, on_index_reached, is_canceled):
+        self.task = task
+        self.speech_idx = speech_idx
+        self.player = player
+        self.on_index_reached = on_index_reached
+        self.is_canceled = is_canceled
+
+    def __call__(self):
+        if self.is_canceled():
+            return
+        self.player.stop()
+        speech_iter = zip_longest(self.task.generate_audio(), self.speech_idx)
+        while True:
+            try:
+                if self.is_canceled():
+                    break
+                (wave_samples, speech_index) = next(speech_iter)
+                if wave_samples:
+                    self.player.feed(wave_samples.get_wave_bytes())
+                if speech_index:
+                    self.on_index_reached(speech_index)
             except StopIteration:
                 break
 
@@ -155,7 +189,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._silence_event = threading.Event()
         self._players = {}
         self._player = self._get_or_create_player(
-            self.tts.speech_options.voice.config.sample_rate
+            self.tts.speech_options.voice.sample_rate
         )
         self.availableLanguages = {v.language for v in self.voices}
         self._voice_map = {v.key: v for v in self.voices}
@@ -172,6 +206,56 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._bgThread.join()
 
     def speak(self, speechSequence):
+        return self.speak_say_all(speechSequence)
+
+    def speak_say_all(self, speechSequence):
+        default_lang = self.tts.language
+        text = []
+        speech_idx = []
+        for item in (*self.combine_adjacent_strings(speechSequence), _EndOfSpeechSequence):
+            item_type = type(item)
+            if item_type is str:
+                text.append(item)
+                continue
+            elif item_type is IndexCommand:
+                speech_idx.append(item.index)
+                continue
+            else:
+                self._bgQueue.put(
+                    ProcessSpeechTaskSayAll(
+                        self.tts.create_speech_task("".join(text)),
+                        tuple(speech_idx),
+                        self._player,
+                        self._on_index_reached,
+                        self._silence_event.is_set,
+                    )
+                )
+                text.clear()
+                speech_idx.clear()
+            if item_type is BreakCommand:
+                self._bgQueue.put(ProcessBreakTask(
+                    self.tts.create_break_task(item.time),
+                    self._player,
+                    self._silence_event.is_set,
+                ))
+            elif item_type is LangChangeCommand:
+                if item.isDefault:
+                    self.tts.language = default_lang
+                else:
+                    self.tts.language = item.lang
+            elif item_type is RateCommand:
+                self.tts.rate = item.newValue
+            elif item_type is VolumeCommand:
+                self.tts.volume = item.newValue
+            elif item_type is PitchCommand:
+                self.tts.pitch = item.newValue
+        self._bgQueue.put(
+            DoneSpeaking(
+                self._player, self._on_index_reached, self._silence_event.is_set
+            )
+        )
+
+    def speak_navigation(self, speechSequence):
         self._bgQueue.put(
             DoneSpeaking(
                 self._player, self._on_index_reached, self._silence_event.is_set
@@ -340,7 +424,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             PiperConfig.setdefault(self.voice, {})["variant"] = variant
             self._set_variant(variant)
         voice = self.tts.speech_options.voice
-        self._player = self._get_or_create_player(voice.config.sample_rate)
+        self._player = self._get_or_create_player(voice.sample_rate)
 
     def _getAvailableVariants(self):
         rv = OrderedDict()
