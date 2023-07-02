@@ -6,9 +6,12 @@ This add-on implements a speech synthesizer driver for NVDA using [Piper](https:
 
 You can listen to voice samples here: [Piper voice samples](https://rhasspy.github.io/piper-samples/).
 
+This add-on uses the [Rust port of Piper](https://github.com/mush42/piper-rs) which is being developed by Musharraf Omer.
+
+
 # Installation
 
-## Installing the add-on
+## Downloading the add-on
 
 You can find the add-on package under the assets section of the [release page](https://github.com/mush42/piper-nvda/releases/latest)
 
