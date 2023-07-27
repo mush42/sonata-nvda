@@ -11,6 +11,9 @@ _configSpec = """[voices]
 [[__many__]]
 variant = string(default=None)
 speaker = string(default=None)
+noise_scale = integer(default=50, min=0, max=100)
+length_scale = integer(default=50, min=0, max=100)
+noise_w = integer(default=50, min=0, max=100)
 
 [lang]
 [[__many__]]

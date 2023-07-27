@@ -16,7 +16,7 @@ import config
 import languageHandler
 import nvwave
 import synthDriverHandler
-from autoSettingsUtils.driverSetting import DriverSetting
+from autoSettingsUtils.driverSetting import DriverSetting, NumericDriverSetting
 from logHandler import log
 from speech.sayAll import SayAllHandler
 from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
@@ -160,6 +160,9 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         SynthDriver.RateBoostSetting(),
         SynthDriver.VolumeSetting(),
         SynthDriver.PitchSetting(),
+        NumericDriverSetting("noise_scale", _("&Noise scale"), False),
+        NumericDriverSetting("length_scale", _("&Length scale"), True),
+        NumericDriverSetting("noise_w", _("Noise &w"), False),
     )
     supportedCommands = {
         IndexCommand,
@@ -188,6 +191,10 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._bgThread = BgThread(self._bgQueue)
         self._silence_event = threading.Event()
         self._players = {}
+        self._default_voice_scales = {
+            self._get_variant_independent_voice_id(voice.key): tuple(round(s, 2) for s in (voice.noise_scale, voice.length_scale, voice.noise_w))
+            for voice in self.voices
+        }
         self._player = self._get_or_create_player(
             self.tts.speech_options.voice.sample_rate
         )
@@ -387,6 +394,79 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def _get_voice(self):
         return self._get_variant_independent_voice_id(self.tts.voice)
 
+    def _get_noise_scale(self):
+        factor = 50
+        if hasattr(self, "_noise_scale_factor"):
+            factor = self._noise_scale_factor
+        elif self.voice in PiperConfig:
+            factor = PiperConfig[self.voice].get("noise_scale", 50)
+            self._noise_scale_factor = factor
+
+        return factor
+
+    def _set_noise_scale(self, value):
+        if self.__voice not in self._default_voice_scales:
+            return
+        default_noise_scale, __, __  = self._default_voice_scales[self.__voice]
+        if value == 50:
+            self.tts.speech_options.voice.noise_scale = default_noise_scale
+        else:
+            self.tts.speech_options.voice.noise_scale = max(
+                0.1,
+                round(self._percentToParam(value, 0.0, default_noise_scale * 3), 2)
+            )
+        self._noise_scale_factor = value
+
+    def _get_length_scale(self):
+        factor = 50
+        if hasattr(self, "_length_scale_factor"):
+            factor = self._length_scale_factor
+        elif self.voice in PiperConfig:
+            factor = PiperConfig[self.voice].get("length_scale", 50)
+            self._length_scale_factor = factor
+
+        return factor
+
+    def _set_length_scale(self, value):
+        if self.__voice not in self._default_voice_scales:
+            return
+        __, default_length_scale, __  = self._default_voice_scales[self.__voice]
+        if value == 50:
+            self.tts.speech_options.voice.length_scale = default_length_scale
+        else:
+            self.tts.speech_options.voice.length_scale = max(
+                0.1,
+                round(self._percentToParam(value, 0.0, default_length_scale * 2), 2)
+            )
+
+        self._length_scale_factor = value
+
+    def _get_noise_w(self):
+        factor = 50
+        if hasattr(self, "_noise_w_factor"):
+            factor = self._noise_w_factor
+        elif self.voice in PiperConfig:
+            factor = PiperConfig[self.voice].get("noise_w", 50)
+            self._noise_w_factor = factor
+
+        return factor
+
+    def _set_noise_w(self, value):
+        if value == self._noise_w_factor:
+            return
+
+        if self.__voice not in self._default_voice_scales:
+            return
+        __, __, default_noise_w  = self._default_voice_scales[self.__voice]
+        if value == 50:
+            self.tts.speech_options.voice.noise_w = default_noise_w
+        else:
+            self.tts.speech_options.voice.noise_w = max(
+                0.1,
+                round(self._percentToParam(value, 0.0, default_noise_w * 3), 2)
+            )
+        self._noise_w_factor = value
+
     def _set_voice(self, value):
         if value not in self.availableVoices:
             value = list(self.availableVoices)[0]
@@ -402,9 +482,15 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             variant = self.__default_variants[value]
             speaker = None
         self._set_variant(variant)
+
+        # Reset params
+        self.noise_scale = self.noise_scale
+        self.length_scale = self.length_scale
+        self.noise_w = self.noise_w
+
         if speaker is not None:
             self._set_speaker(speaker)
-
+        
     def _get_language(self):
         return self.tts.language
 

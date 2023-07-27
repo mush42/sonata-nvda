@@ -37,7 +37,7 @@ sys.path.remove(LIB_DIRECTORY)
 
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
 PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices")
-
+BATCH_SIZE = max(os.cpu_count() // 2, 2)
 FALLBACK_SPEAKER_NAME = "default"
 DEFAULT_RATE = 50
 DEFAULT_VOLUME = 100
@@ -93,23 +93,47 @@ class PiperVoice:
         )
         self.synth = Piper.with_vits(self.vits_model)
         self.sample_rate = self.vits_model.get_wave_output_info().sample_rate
-        self.speakers = self.vits_model.speakers
+        self.speakers = dict(sorted(self.vits_model.speakers.items()))
+        self.speaker_names = list(self.speakers.values())
         self.is_multi_speaker = bool(self.speakers)
         if self.is_multi_speaker:
-            self.default_speaker = self.speakers[0]
+            self.default_speaker = self.vits_model.speaker
         else:
             self.default_speaker = None
 
+    @property
+    def noise_scale(self):
+        return self.vits_model.noise_scale
+
+    @noise_scale.setter
+    def noise_scale(self, value):
+        self.vits_model.noise_scale = value
+
+    @property
+    def length_scale(self):
+        return self.vits_model.length_scale
+
+    @length_scale.setter
+    def length_scale(self, value):
+        self.vits_model.length_scale = value
+
+    @property
+    def noise_w(self):
+        return self.vits_model.noise_w
+
+    @noise_w.setter
+    def noise_w(self, value):
+        self.vits_model.noise_w = value
+
     def synthesize(self, text, speaker, rate, volume, pitch):
-        if self.is_multi_speaker:
-            if self.vits_model.speaker != speaker:
-                self.vits_model.speaker = speaker
+        if speaker and self.is_multi_speaker:
+            self.vits_model.speaker = speaker
         audio_output_config = AudioOutputConfig(
             rate=rate,
             volume=volume,
             pitch=pitch
         )
-        return self.synth.synthesize_lazy(text.strip(), audio_output_config=audio_output_config)
+        return self.synth.synthesize_batched(text.strip(), audio_output_config=audio_output_config, batch_size=BATCH_SIZE)
 
 
 class SpeechOptions:
@@ -201,9 +225,11 @@ class PiperTextToSpeechSystem:
 
     @speaker.setter
     def speaker(self, new_speaker: str):
-        if new_speaker == FALLBACK_SPEAKER_NAME:
+        if not self.speech_options.voice.is_multi_speaker:
             return
-        if new_speaker in self.speech_options.voice.speakers:
+        if new_speaker == FALLBACK_SPEAKER_NAME:
+            self.speech_options.speaker = self.speech_options.voice.speakers[0]
+        elif new_speaker in self.speech_options.voice.speaker_names:
             self.speech_options.speaker = new_speaker
         else:
             raise SpeakerNotFoundError(f"Speaker `{new_speaker}` was not found")
@@ -267,7 +293,7 @@ class PiperTextToSpeechSystem:
 
     def get_speakers(self):
         if self.speech_options.voice.is_multi_speaker:
-            return self.speech_options.voice.speakers
+            return self.speech_options.voice.speaker_names
         else:
             return [FALLBACK_SPEAKER_NAME, ]
 
