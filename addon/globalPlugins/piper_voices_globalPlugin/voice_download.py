@@ -31,12 +31,9 @@ with helpers.import_bundled_library():
     from pathlib import Path
 
 
-PIPER_VOICE_LIST_URL = f"https://raw.githubusercontent.com/mush42/piper-nvda/main/data/piper-voices.json"
-# PIPER_VOICE_LIST_URL = "http://localhost:3000/piper-voices.json"
-PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/main"
-# PIPER_VOICE_DOWNLOAD_URL_PREFIX = "http://localhost:3000/voices"
+PIPER_VOICE_LIST_URL = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/voices.json"
+PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
 PIPER_SAMPLES_URL_PREFIX = "https://rhasspy.github.io/piper-samples/samples"
-# PIPER_SAMPLES_URL_PREFIX = "http://localhost:3000/samples"
 PIPER_VOICES_JSON_LOCAL_CACHE = os.path.join(PIPER_VOICES_DIR, "piper-voices.json")
 THREAD_POOL_EXECUTOR = ThreadPoolExecutor()
 

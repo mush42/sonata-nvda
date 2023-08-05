@@ -31,7 +31,7 @@ with import_bundled_library():
 
 
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
-PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices", "1.0")
+PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices", "v1.0")
 BATCH_SIZE = max(os.cpu_count() // 2, 2)
 FALLBACK_SPEAKER_NAME = "default"
 DEFAULT_RATE = 50
