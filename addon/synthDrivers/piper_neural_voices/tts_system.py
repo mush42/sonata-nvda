@@ -7,10 +7,8 @@ import copy
 import io
 import operator
 import os
-import re
 import string
 import sys
-import tarfile
 import typing
 import wave
 from abc import ABC, abstractmethod
@@ -19,25 +17,22 @@ from typing import List, Mapping, Optional, Sequence, Union
 
 import globalVars
 
+from .helpers import import_bundled_library, LIB_DIRECTORY
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-LIB_DIRECTORY = os.path.join(HERE, "lib")
+
 NVDA_ESPEAK_DIR = os.path.join(globalVars.appDir, "synthDrivers")
 os.environ["PIPER_ESPEAKNG_DATA_DIRECTORY"] = os.fspath(NVDA_ESPEAK_DIR)
-os.environ["ORT_DYLIB_PATH"] = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "lib", "onnxruntime.dll")
-)
+os.environ["ORT_DYLIB_PATH"] = os.path.abspath(os.path.join(LIB_DIRECTORY, "onnxruntime.dll"))
 
 
-sys.path.insert(0, LIB_DIRECTORY)
-from pathlib import Path
-from pyper import Piper, VitsModel, AudioOutputConfig
-sys.path.remove(LIB_DIRECTORY)
+with import_bundled_library():
+    from pathlib import Path
+    from pyper import Piper, VitsModel, AudioOutputConfig
 
 
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
-PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices")
-
+PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices", "v1.0")
+BATCH_SIZE = max(os.cpu_count() // 2, 2)
 FALLBACK_SPEAKER_NAME = "default"
 DEFAULT_RATE = 50
 DEFAULT_VOLUME = 100
@@ -80,6 +75,23 @@ class PiperVoice:
     location: str
     properties: typing.Optional[typing.Mapping[str, int]] = field(default_factory=dict)
 
+    @classmethod
+    def from_path(cls, path):
+        path = Path(path)
+        key = path.name
+        try:
+            lang, name, quality = key.split("-")
+        except ValueError:
+            raise ValueError(f"Invalid voice path: {path}")
+        return cls(
+            key=key,
+            name=name,
+            language=lang,
+            description="",
+            location=path,
+            properties={"quality": quality.lower()}
+        )
+
     def __post_init__(self):
         try:
             self.model_path = next(self.location.glob("*.onnx"))
@@ -93,23 +105,47 @@ class PiperVoice:
         )
         self.synth = Piper.with_vits(self.vits_model)
         self.sample_rate = self.vits_model.get_wave_output_info().sample_rate
-        self.speakers = self.vits_model.speakers
+        self.speakers = dict(sorted(self.vits_model.speakers.items()))
+        self.speaker_names = list(self.speakers.values())
         self.is_multi_speaker = bool(self.speakers)
         if self.is_multi_speaker:
-            self.default_speaker = self.speakers[0]
+            self.default_speaker = self.vits_model.speaker
         else:
             self.default_speaker = None
 
+    @property
+    def noise_scale(self):
+        return self.vits_model.noise_scale
+
+    @noise_scale.setter
+    def noise_scale(self, value):
+        self.vits_model.noise_scale = value
+
+    @property
+    def length_scale(self):
+        return self.vits_model.length_scale
+
+    @length_scale.setter
+    def length_scale(self, value):
+        self.vits_model.length_scale = value
+
+    @property
+    def noise_w(self):
+        return self.vits_model.noise_w
+
+    @noise_w.setter
+    def noise_w(self, value):
+        self.vits_model.noise_w = value
+
     def synthesize(self, text, speaker, rate, volume, pitch):
-        if self.is_multi_speaker:
-            if self.vits_model.speaker != speaker:
-                self.vits_model.speaker = speaker
+        if speaker and self.is_multi_speaker:
+            self.vits_model.speaker = speaker
         audio_output_config = AudioOutputConfig(
             rate=rate,
             volume=volume,
             pitch=pitch
         )
-        return self.synth.synthesize_lazy(text.strip(), audio_output_config=audio_output_config)
+        return self.synth.synthesize_batched(text.strip(), audio_output_config=audio_output_config, batch_size=BATCH_SIZE)
 
 
 class SpeechOptions:
@@ -158,10 +194,6 @@ class PiperSpeechSynthesisTask(AudioTask):
 
 class PiperTextToSpeechSystem:
 
-    VOICE_NAME_REGEX = re.compile(
-        r"voice(-|_)(?P<language>[a-z]+[-]?([a-z]+)?)(-|_)(?P<name>[a-z]+)(-|_)(?P<quality>(high|medium|low|x-low))"
-    )
-
     def __init__(
         self, voices: Sequence[PiperVoice], speech_options: SpeechOptions = None
     ):
@@ -201,9 +233,11 @@ class PiperTextToSpeechSystem:
 
     @speaker.setter
     def speaker(self, new_speaker: str):
-        if new_speaker == FALLBACK_SPEAKER_NAME:
+        if not self.speech_options.voice.is_multi_speaker:
             return
-        if new_speaker in self.speech_options.voice.speakers:
+        if new_speaker == FALLBACK_SPEAKER_NAME:
+            self.speech_options.speaker = self.speech_options.voice.speakers[0]
+        elif new_speaker in self.speech_options.voice.speaker_names:
             self.speech_options.speaker = new_speaker
         else:
             raise SpeakerNotFoundError(f"Speaker `{new_speaker}` was not found")
@@ -267,7 +301,7 @@ class PiperTextToSpeechSystem:
 
     def get_speakers(self):
         if self.speech_options.voice.is_multi_speaker:
-            return self.speech_options.voice.speakers
+            return self.speech_options.voice.speaker_names
         else:
             return [FALLBACK_SPEAKER_NAME, ]
 
@@ -292,63 +326,16 @@ class PiperTextToSpeechSystem:
         Path(PIPER_VOICES_DIR).mkdir(parents=True, exist_ok=True)
         return sorted(
             cls.load_voices_from_directory(PIPER_VOICES_DIR),
-            key=operator.attrgetter("name"),
+            key=operator.attrgetter("key"),
         )
 
     @classmethod
     def load_voices_from_directory(cls, voices_directory, *, directory_name_prefix="voice-"):
         rv = []
         for directory in (d for d in Path(voices_directory).iterdir() if d.is_dir()):
-            match = cls.VOICE_NAME_REGEX.match(directory.name)
-            if match is None:
+            try:
+                voice = PiperVoice.from_path(directory)
+            except ValueError:
                 continue
-            info = match.groupdict()
-            language = cls.normalize_language(info["language"])
-            name = info["name"]
-            quality = info["quality"]
-            rv.append(
-                PiperVoice(
-                    key=f"{language}-{name}-{quality}",
-                    name=name.title(),
-                    language=language,
-                    description="",
-                    location=directory.absolute(),
-                    properties={"quality": quality},
-                )
-            )
+            rv.append(voice)
         return rv
-
-    @classmethod
-    def install_voice(cls, voice_archive_path, dest_dir):
-        """Uniform handleing of voice tar archives."""
-        archive_path = Path(voice_archive_path)
-        voice_name = archive_path.name.rstrip("".join(archive_path.suffixes))
-        match = cls.VOICE_NAME_REGEX.match(voice_name)
-        if match is None:
-            raise ValueError(f"Invalid voice archive: `{archive_path}`")
-        info = match.groupdict()
-        language = info["language"]
-        name = info["name"]
-        quality = info["quality"]
-        voice_key = f"voice-{language}-{name}-{quality}"
-        with tarfile.open(os.fspath(archive_path), "r:gz") as tar:
-            members = tar.getmembers()
-            try:
-                m_onnx_model = next(m for m in members if m.name.endswith(".onnx"))
-                m_model_config = next(
-                    m for m in members if m.name.endswith(".onnx.json")
-                )
-            except StopIteration:
-                raise ValueError(f"Invalid voice archive: `{archive_path}`")
-            dst = Path(dest_dir).joinpath(voice_key)
-            dst.mkdir(parents=True, exist_ok=True)
-            tar.extract(m_onnx_model, path=os.fspath(dst), set_attrs=False)
-            tar.extract(m_model_config, path=os.fspath(dst), set_attrs=False)
-            try:
-                m_model_card = next(m for m in members if m.name.endswith("MODEL_CARD"))
-            except StopIteration:
-                pass
-            else:
-                tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
-            return voice_key
-

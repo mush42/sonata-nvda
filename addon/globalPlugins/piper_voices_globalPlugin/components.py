@@ -14,6 +14,9 @@ import wx.lib.mixins.listctrl as listmix
 from . import sized_controls as sc
 
 
+import gui
+
+
 ObjectCollection = typing.Iterable[typing.Any]
 
 
@@ -97,7 +100,6 @@ class SnakDialog(SimpleDialog):
         self.message = message
         self.dismiss_callback = dismiss_callback
         super().__init__(*args, title="", style=0, **kwargs)
-        self.CenterOnParent()
 
     def addControls(self, parent):
         ai = wx.ActivityIndicator(parent)
@@ -136,6 +138,36 @@ class SnakDialog(SimpleDialog):
 
     def getButtons(self, parent):
         return
+
+
+class AsyncSnakDialog:
+    """A helper to make the use of SnakDialogs Ergonomic."""
+
+    def __init__(
+        self,
+        executor,
+        func,
+        done_callback: DoneCallback,
+        *sdg_args,
+        **sdg_kwargs,
+    ):
+        self.snak_dg = SnakDialog(*sdg_args, **sdg_kwargs)
+        self.done_callback = done_callback
+        self.future = executor.submit(func).add_done_callback(
+            self.on_future_completed
+        )
+        self.snak_dg.CenterOnScreen()
+        gui.runScriptModalDialog(self.snak_dg)
+
+    def on_future_completed(self, completed_future):
+        self.Dismiss()
+        wx.CallAfter(self.done_callback, completed_future)
+
+    def Dismiss(self):
+        if self.snak_dg:
+            wx.CallAfter(self.snak_dg.Hide)
+            wx.CallAfter(self.snak_dg.Close)
+            wx.CallAfter(self.snak_dg.Destroy)
 
 
 @dataclasses.dataclass
