@@ -254,13 +254,16 @@ class PiperVoiceDownloader:
 
         return retvals
 
-    @staticmethod
-    def _do_download_file(file, download_dir, progress_callback):
+    @classmethod
+    def _do_download_file(cls, file, download_dir, progress_callback):
         target_file = os.path.join(download_dir, file.name)
         hasher = md5()
         total_size = file.size_in_bytes
         downloaded_til_now = 0
         with request.yield_response('GET', file.download_url) as response:
+            if response.status == 302:
+                file.download_url = response.getheader("Location")
+                return cls._do_download_file(file, download_dir, progress_callback)
             file_buffer = open(target_file, "wb")
             while True:
                 chunk = response.read(4096)
