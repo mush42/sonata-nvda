@@ -36,7 +36,7 @@ class InstalledPiperVoicesPanel(SizedPanel):
         self.__already_populated = threading.Event()
         # Add controls
         # Translators: lable for a list of installed voices
-        voices_label = wx.StaticText(self, -1, _("Available voices"))
+        voices_label = wx.StaticText(self, -1, _("Installed voices"))
         self.voices_list = ImmutableObjectListView(
             self,
             -1,
@@ -173,7 +173,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
         # Translators: label of a choice
         wx.StaticText(self, -1, _("Language"))
         self.language_choice = wx.Choice(self, -1, choices=[])
-        wx.StaticText(self, -1, _("Voices"))
+        wx.StaticText(self, -1, _("Available voices"))
         voice_list_columns=[
             # Translators: list view column title
             ColumnDefn(_("Name"), "left", 30, operator.attrgetter("name")),
