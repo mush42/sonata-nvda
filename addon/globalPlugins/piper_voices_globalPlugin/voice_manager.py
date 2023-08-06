@@ -339,13 +339,13 @@ class OnlinePiperVoicesPanel(SizedPanel):
         return miniaudio.decode(resp.body, nchannels=1, sample_rate=22050)
 
 
-class PiperVoiceGalaryDialog(SimpleDialog):
+class PiperVoiceManagerDialog(SimpleDialog):
 
     def __init__(self):
         super().__init__(
             gui.mainFrame,
-            # Translators: title of voice galary dialog
-            title=_("Piper voice galary"),
+            # Translators: title of voice manager dialog
+            title=_("Piper voice manager"),
         )
         self.SetSize((500, -1))
         self.CenterOnScreen()

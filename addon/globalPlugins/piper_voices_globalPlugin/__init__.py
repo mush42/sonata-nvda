@@ -30,47 +30,47 @@ from piper_neural_voices.tts_system import (
 sys.path.remove(_TTS_MODULE_DIR)
 
 
-from .voice_galary import PiperVoiceGalaryDialog
+from .voice_manager import PiperVoiceManagerDialog
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__voice_galary_shown = False
+        self.__voice_manager_shown = False
         self._voice_checker = lambda: wx.CallLater(3000, self._perform_voice_check)
         core.postNvdaStartup.register(self._voice_checker)
         self.itemHandle = gui.mainFrame.sysTrayIcon.menu.Insert(
             4,
             wx.ID_ANY,
             # Translators: label of a menu item
-            _("Piper voice &galary..."),
-            # Translators: Piper's voice galary menu item help
-            _("Open the voice galary to preview and download piper voices"),
+            _("Piper voice &manager..."),
+            # Translators: Piper's voice manager menu item help
+            _("Open the voice manager to preview and download piper voices"),
         )
-        gui.mainFrame.sysTrayIcon.menu.Bind(wx.EVT_MENU, self.on_galary, self.itemHandle)
+        gui.mainFrame.sysTrayIcon.menu.Bind(wx.EVT_MENU, self.on_manager, self.itemHandle)
 
-    def on_galary(self, event):
-        galary_dialog = PiperVoiceGalaryDialog()
-        gui.runScriptModalDialog(galary_dialog)
-        self.__voice_galary_shown = True
+    def on_manager(self, event):
+        manager_dialog = PiperVoiceManagerDialog()
+        gui.runScriptModalDialog(manager_dialog)
+        self.__voice_manager_shown = True
 
     def _perform_voice_check(self):
-        if self.__voice_galary_shown:
+        if self.__voice_manager_shown:
             return
         if not any(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir()):
             retval = gui.messageBox(
                 # Translators: message telling the user that no voice is installed
                 _(
                     "No Piper voice was found.\n"
-                    "You can preview and download voices from the voice galary.\n"
-                    "Do you want to open the voice galary now?"
+                    "You can preview and download voices from the voice manager.\n"
+                    "Do you want to open the voice manager now?"
                 ),
                 # Translators: title of a message telling the user that no Piper voice was found
                 _("Piper Neural Voices"),
                 wx.YES_NO | wx.ICON_WARNING,
             )
             if retval == wx.YES:
-                self.on_galary(None)
+                self.on_manager(None)
 
     def terminate(self):
         try:
