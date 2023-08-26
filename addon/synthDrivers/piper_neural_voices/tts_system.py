@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Sequence, Union
 
 import globalVars
+from languageHandler import normalizeLanguage
 
 from .helpers import import_bundled_library, LIB_DIRECTORY
 
@@ -86,7 +87,7 @@ class PiperVoice:
         return cls(
             key=key,
             name=name,
-            language=lang,
+            language=normalizeLanguage(lang),
             description="",
             location=path,
             properties={"quality": quality.lower()}
@@ -250,7 +251,7 @@ class PiperTextToSpeechSystem:
     @language.setter
     def language(self, new_language: str):
         """Set the current voice language"""
-        lang = self.normalize_language(new_language)
+        lang = normalizeLanguage(new_language)
         lang_code = lang.split("-")[0] + "-"
         possible_voices = []
         for voice in self.voices:
@@ -310,16 +311,6 @@ class PiperTextToSpeechSystem:
 
     def create_break_task(self, time_ms):
         return SilenceTask(time_ms, self.speech_options.voice.sample_rate)
-
-    @staticmethod
-    def normalize_language(language):
-        language = language.replace("_", "-")
-        lang, *localename = language.split("-")
-        if not localename:
-            return lang
-        else:
-            localename = localename[0].upper()
-            return "-".join([lang, localename])
 
     @classmethod
     def load_piper_voices_from_nvda_config_dir(cls):
