@@ -45,7 +45,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             # Translators: label of a menu item
             _("Piper voice &manager..."),
             # Translators: Piper's voice manager menu item help
-            _("Open the voice manager to preview and download piper voices"),
+            _("Open the voice manager to preview, install or download piper voices"),
         )
         gui.mainFrame.sysTrayIcon.menu.Bind(wx.EVT_MENU, self.on_manager, self.itemHandle)
 
