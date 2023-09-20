@@ -20,7 +20,7 @@ import nvwave
 import synthDriverHandler
 from logHandler import log
 
-from . import PiperTextToSpeechSystem
+from . import PiperTextToSpeechSystem, PIPER_VOICES_DIR
 from . import voice_download
 from . import helpers
 from .components import AsyncSnakDialog, ColumnDefn, ImmutableObjectListView, SimpleDialog, make_sized_static_box
