@@ -352,7 +352,7 @@ class PiperTextToSpeechSystem:
         language = info["language"]
         name = info["name"]
         quality = info["quality"]
-        voice_key = f"voice-{language}-{name}-{quality}"
+        voice_key = f"{language}-{name}-{quality}"
         with tarfile.open(os.fspath(archive_path), "r:gz") as tar:
             members = tar.getmembers()
             try:
