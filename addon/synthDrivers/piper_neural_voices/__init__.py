@@ -452,7 +452,8 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         return factor
 
     def _set_noise_w(self, value):
-        if value == self._noise_w_factor:
+        factor = getattr(self, "_noise_w_factor", None)
+        if factor and value == factor:
             return
 
         if self.__voice not in self._default_voice_scales:
