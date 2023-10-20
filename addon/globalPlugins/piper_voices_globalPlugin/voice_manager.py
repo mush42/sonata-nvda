@@ -254,7 +254,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
         self.speaker_choice.Enable(False)
 
     def on_voice_selected(self, event):
-        nvwave.fileWavePlayer.stop()
+        stop_playback()
         self.speaker_choice.SetItems([])
         selected_voice = self.voices_list.get_selected()
         if selected_voice is None:
@@ -268,7 +268,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
             self.speaker_choice.Enable(False)
 
     def on_speaker_selection_changed(self, event):
-        nvwave.fileWavePlayer.stop()
+        stop_playback()
 
     def on_preview(self, event):
         selected_voice = self.voices_list.get_selected()
@@ -277,7 +277,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
 
         preview_btn = event.GetEventObject()
         if preview_btn.GetLabel() == self._preview_stop_label:
-            nvwave.fileWavePlayer.stop()
+            stop_playback()
             preview_btn.SetLabel(self._preview_label)
             return
 
@@ -287,8 +287,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
                 with tempfile.TemporaryDirectory() as tempdir:
                     mp3file = os.path.join(tempdir, "speaker_0.mp3")
                     miniaudio.wav_write_file(mp3file, decoded_file)
-                    nvwave.playWaveFile(mp3file)
-                    nvwave.fileWavePlayer.idle()
+                    nvwave.playWaveFile(mp3file, asynchronous=True)
             except:
                 log.exception("Failed to retrieve/play voice preview", exc_info=True)
             finally:
@@ -333,7 +332,7 @@ class OnlinePiperVoicesPanel(SizedPanel):
 
     @staticmethod
     def get_preview_audio(mp3_url):
-        nvwave.fileWavePlayer.stop()
+        stop_playback()
         resp = voice_download.request.get(mp3_url)
         resp.raise_for_status()
         return miniaudio.decode(resp.body, nchannels=1, sample_rate=22050)
@@ -390,3 +389,7 @@ class PiperVoiceManagerDialog(SimpleDialog):
         for i in range(self.notebookCtrl.GetPageCount()):
             panel = self.notebookCtrl.GetPage(i)
             panel.invalidate_cache()
+
+def stop_playback():
+    if nvwave.fileWavePlayer is not None:
+        nvwave.fileWavePlayer.stop()

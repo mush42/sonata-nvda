@@ -3,6 +3,8 @@
 # Copyright (c) 2023 Musharraf Omer
 # This file is covered by the GNU General Public License.
 
+import tones
+
 import queue
 import sys
 import threading
@@ -82,6 +84,7 @@ class ProcessSpeechTaskSayAll:
                 if self.is_canceled():
                     break
                 (wave_samples, speech_index) = next(speech_iter)
+                log.info(f"RTF: {wave_samples.real_time_factor}")
                 if wave_samples:
                     self.player.feed(wave_samples.get_wave_bytes())
                 if speech_index:
