@@ -14,12 +14,13 @@ import tempfile
 import threading
 
 import wx
+from wx.adv import CommandLinkButton
 import gui
 import nvwave
 import synthDriverHandler
 from logHandler import log
 
-from . import PiperTextToSpeechSystem
+from . import PiperTextToSpeechSystem, PIPER_VOICES_DIR
 from . import voice_download
 from . import helpers
 from .components import AsyncSnakDialog, ColumnDefn, ImmutableObjectListView, SimpleDialog, make_sized_static_box
@@ -35,7 +36,7 @@ class InstalledPiperVoicesPanel(SizedPanel):
         super().__init__(parent, -1)
         self.__already_populated = threading.Event()
         # Add controls
-        # Translators: lable for a list of installed voices
+        # Translators: label for a list of installed voices
         voices_label = wx.StaticText(self, -1, _("Installed voices"))
         self.voices_list = ImmutableObjectListView(
             self,
@@ -53,12 +54,25 @@ class InstalledPiperVoicesPanel(SizedPanel):
         )
         self.buttons_panel = SizedPanel(self, -1)
         self.buttons_panel.SetSizerType("horizontal")
-        # Translators: lable for a button for showing voice model card
+        # Translators: label for a button for showing voice model card
         self.model_card_button = wx.Button(self.buttons_panel, -1, _("&Voice model card..."))
-        # Translators: lable for a button for removing a voice
+        # Translators: label for a button for removing a voice
         self.remove_voice_button = wx.Button(self.buttons_panel, -1, _("&Remove voice..."))
+        add_voice_button = CommandLinkButton(
+            self,
+            -1,
+            # Translators: the main label of the install button
+            _("Install from local file"),
+            # Translators: the note for this button
+            _(
+                "Install a voice from a local archive.\n"
+                "The archive contains the voice model and configuration.\n"
+                "The archive should have a (.tar.gz) file extension."
+            )
+        )
         self.Bind(wx.EVT_BUTTON, self.on_model_card, self.model_card_button)
         self.Bind(wx.EVT_BUTTON, self.on_remove_voice, self.remove_voice_button)
+        self.Bind(wx.EVT_BUTTON, self._on_install_voice_from_tar, add_voice_button)
 
     def update_voices_list(self, set_focus=False, invalidate_synth_voices_cache=False):
         voices = list(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir())
@@ -161,6 +175,50 @@ class InstalledPiperVoicesPanel(SizedPanel):
                     style=wx.ICON_INFORMATION
                 )
                 self.update_voices_list(set_focus=True, invalidate_synth_voices_cache=True)
+
+    def _on_install_voice_from_tar(self, event):
+        openFileDialog = wx.FileDialog(
+            parent=gui.mainFrame,
+            # Translators: title for a dialog for opening a file
+            message=_("Choose voice archive file "),
+            defaultDir=wx.GetUserHome(),
+            wildcard="Tar archives *.tar.gz | *.tar.gz",
+            style=wx.FD_OPEN,
+        )
+        gui.runScriptModalDialog(
+            openFileDialog,
+            functools.partial(self._get_process_tar_archive, openFileDialog),
+        )
+
+    def _get_process_tar_archive(self, dialog, res):
+        if res != wx.ID_OK:
+            return
+        filepath = dialog.GetPath().strip()
+        if not filepath:
+            return
+        try:
+            voice_key = PiperTextToSpeechSystem.install_voice(
+                filepath, PIPER_VOICES_DIR
+            )
+        except:
+            log.error("Failed to install voice from archive", exc_info=True)
+            gui.messageBox(
+                # Translators: message telling the user that installing the voice has failed
+                _(
+                    "Failed to install voice from archive. See NVDA's log for more details."
+                ),
+                _("Voice installation failed"),
+                style=wx.ICON_ERROR,
+            )
+        else:
+            gui.messageBox(
+                # Translators: message telling the user that installing the voice is successful
+                _(
+                    "Voice {voice} has been installed successfully."
+                ).format(voice=voice_key),
+                _("Voice installed successfully"),
+                style=wx.ICON_INFORMATION,
+            )
 
 
 class OnlinePiperVoicesPanel(SizedPanel):

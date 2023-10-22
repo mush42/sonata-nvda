@@ -7,8 +7,10 @@ import copy
 import io
 import operator
 import os
+import re
 import string
 import sys
+import tarfile
 import typing
 import wave
 from abc import ABC, abstractmethod
@@ -223,6 +225,10 @@ class SpeechOptions:
 
 
 class PiperTextToSpeechSystem:
+
+    VOICE_NAME_REGEX = re.compile(        r"voice(-|_)(?P<language>[a-z]+[_]?([a-z]+)?)(-|_)(?P<name>[a-z]+)(-|_)(?P<quality>(high|medium|low|x-low))"
+    )
+
     def __init__(
         self, voices: Sequence[PiperVoice], speech_options: SpeechOptions = None
     ):
@@ -362,3 +368,37 @@ class PiperTextToSpeechSystem:
                 continue
             rv.append(voice)
         return rv
+
+    @classmethod
+    def install_voice(cls, voice_archive_path, dest_dir):
+        """Uniform handleing of voice tar archives."""
+        archive_path = Path(voice_archive_path)
+        voice_name = archive_path.name.rstrip("".join(archive_path.suffixes))
+        match = cls.VOICE_NAME_REGEX.match(voice_name)
+        if match is None:
+            raise ValueError(f"Invalid voice archive: `{archive_path}`")
+        info = match.groupdict()
+        language = info["language"]
+        name = info["name"]
+        quality = info["quality"]
+        voice_key = f"{language}-{name}-{quality}"
+        with tarfile.open(os.fspath(archive_path), "r:gz") as tar:
+            members = tar.getmembers()
+            try:
+                m_onnx_model = next(m for m in members if m.name.endswith(".onnx"))
+                m_model_config = next(
+                    m for m in members if m.name.endswith(".onnx.json")
+                )
+            except StopIteration:
+                raise ValueError(f"Invalid voice archive: `{archive_path}`")
+            dst = Path(dest_dir).joinpath(voice_key)
+            dst.mkdir(parents=True, exist_ok=True)
+            tar.extract(m_onnx_model, path=os.fspath(dst), set_attrs=False)
+            tar.extract(m_model_config, path=os.fspath(dst), set_attrs=False)
+            try:
+                m_model_card = next(m for m in members if m.name.endswith("MODEL_CARD"))
+            except StopIteration:
+                pass
+            else:
+                tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
+            return voice_key
