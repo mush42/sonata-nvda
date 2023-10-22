@@ -18,21 +18,19 @@ from typing import List, Mapping, Optional, Sequence, Union
 import globalVars
 from languageHandler import normalizeLanguage
 
+from . import aio
+from . import grpc_client
 from .helpers import import_bundled_library, LIB_DIRECTORY
-
-
-NVDA_ESPEAK_DIR = os.path.join(globalVars.appDir, "synthDrivers")
-os.environ["PIPER_ESPEAKNG_DATA_DIRECTORY"] = os.fspath(NVDA_ESPEAK_DIR)
-os.environ["ORT_DYLIB_PATH"] = os.path.abspath(os.path.join(LIB_DIRECTORY, "onnxruntime.dll"))
 
 
 with import_bundled_library():
     from pathlib import Path
-    from pyper import Piper, VitsModel, AudioOutputConfig
 
 
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
-PIPER_VOICES_DIR = os.path.join(globalVars.appArgs.configPath, "piper", "voices", "v1.0")
+PIPER_VOICES_DIR = os.path.join(
+    globalVars.appArgs.configPath, "piper", "voices", "v1.0"
+)
 BATCH_SIZE = max(os.cpu_count() // 2, 2)
 FALLBACK_SPEAKER_NAME = "default"
 DEFAULT_RATE = 50
@@ -61,10 +59,31 @@ class SilenceTask(AudioTask):
         self.time_ms = time_ms
         self.sample_rate = sample_rate
 
-    def generate_audio(self):
+    async def generate_audio(self):
         """Generate silence (16-bit mono at sample rate)."""
         num_samples = int((self.time_ms / 1000.0) * self.sample_rate)
         return bytes(num_samples * 2)
+
+
+@dataclass
+class Scales:
+    length_scale: float
+    noise_scale: float
+    noise_w: float
+
+
+@dataclass
+class PiperSpeechSynthesisTask(AudioTask):
+    """A pending request to synthesize a token."""
+
+    __slots__ = ["text", "speech_options"]
+
+    def __init__(self, text, speech_options):
+        self.text = text
+        self.speech_options = speech_options
+
+    async def generate_audio(self):
+        return await self.speech_options.speak_text(self.text)
 
 
 @dataclass
@@ -75,6 +94,7 @@ class PiperVoice:
     description: str
     location: str
     properties: typing.Optional[typing.Mapping[str, int]] = field(default_factory=dict)
+    remote_id: str = None
 
     @classmethod
     def from_path(cls, path):
@@ -90,10 +110,12 @@ class PiperVoice:
             language=normalizeLanguage(lang),
             description="",
             location=path,
-            properties={"quality": quality.lower()}
+            properties={"quality": quality.lower()},
         )
 
-    def __post_init__(self):
+    def load(self):
+        if self.remote_id:
+            return
         try:
             self.model_path = next(self.location.glob("*.onnx"))
             self.config_path = next(self.location.glob("*.onnx.json"))
@@ -101,112 +123,118 @@ class PiperVoice:
             raise RuntimeError(
                 f"Could not load voice from `{os.fspath(self.location)}`"
             )
-        self.vits_model = VitsModel(
-            os.fspath(self.config_path), os.fspath(self.model_path)
+        voice_info = grpc_client.load_voice(
+            os.fspath(self.model_path), os.fspath(self.config_path)
+        ).result()
+        self.remote_id = voice_info.voice_id
+        default_synth_options = voice_info.synth_options
+        self.default_scales = Scales(
+            length_scale=default_synth_options.length_scale,
+            noise_scale=default_synth_options.noise_scale,
+            noise_w=default_synth_options.noise_w,
         )
-        self.synth = Piper.with_vits(self.vits_model)
-        self.sample_rate = self.vits_model.get_wave_output_info().sample_rate
-        self.speakers = dict(sorted(self.vits_model.speakers.items()))
+        self.sample_rate = voice_info.audio.sample_rate
+        self.speakers = voice_info.speakers
         self.speaker_names = list(self.speakers.values())
         self.is_multi_speaker = bool(self.speakers)
         if self.is_multi_speaker:
-            self.default_speaker = self.vits_model.speaker
+            self.default_speaker = default_synth_options.speaker
         else:
             self.default_speaker = None
 
     @property
+    def speaker(self):
+        if self.is_multi_speaker:
+            return grpc_client.get_synth_options(self.remote_id).result().speaker
+        return FALLBACK_SPEAKER_NAME
+
+    @speaker.setter
+    def speaker(self, value):
+        if self.is_multi_speaker:
+            grpc_client.set_synth_options(self.remote_id, speaker=value).result()
+
+    @property
     def noise_scale(self):
-        return self.vits_model.noise_scale
+        return grpc_client.get_synth_options(self.remote_id).result().noise_scale
 
     @noise_scale.setter
     def noise_scale(self, value):
-        self.vits_model.noise_scale = value
+        grpc_client.set_synth_options(self.remote_id, noise_scale=value).result()
 
     @property
     def length_scale(self):
-        return self.vits_model.length_scale
+        return grpc_client.get_synth_options(self.remote_id).result().length_scale
 
     @length_scale.setter
     def length_scale(self, value):
-        self.vits_model.length_scale = value
+        grpc_client.set_synth_options(self.remote_id, length_scale=value).result()
 
     @property
     def noise_w(self):
-        return self.vits_model.noise_w
+        return grpc_client.get_synth_options(self.remote_id).result().noise_w
 
     @noise_w.setter
     def noise_w(self, value):
-        self.vits_model.noise_w = value
+        grpc_client.set_synth_options(self.remote_id, noise_w=value).result()
 
-    def synthesize(self, text, speaker, rate, volume, pitch):
-        if speaker and self.is_multi_speaker:
-            self.vits_model.speaker = speaker
-        audio_output_config = AudioOutputConfig(
+    async def synthesize(self, text, rate, volume, pitch):
+        stream = grpc_client.speak(
+            voice_id=self.remote_id,
+            text=text,
             rate=rate,
             volume=volume,
-            pitch=pitch
+            pitch=pitch,
         )
-        return self.synth.synthesize_batched(text.strip(), audio_output_config=audio_output_config, batch_size=BATCH_SIZE)
+        async for ret in stream:
+            yield ret.wav_samples
 
 
 class SpeechOptions:
-    __slots__ = ["voice", "speaker", "rate", "volume", "pitch"]
+    __slots__ = ["voice", "rate", "volume", "pitch"]
 
     def __init__(self, voice, speaker=None, rate=None, volume=None, pitch=None):
-        self.voice = voice
-        self.speaker = speaker
+        self.set_voice(voice)
         self.rate = rate
         self.volume = volume
         self.pitch = pitch
 
     def set_voice(self, voice: PiperVoice):
+        voice.load()
         self.voice = voice
-        if voice.is_multi_speaker:
-            self.speaker = voice.default_speaker
-        else:
-            self.speaker = None
+
+    @property
+    def speaker(self):
+        return self.voice.speaker
+
+    @speaker.setter
+    def speaker(self, value):
+        self.voice.speaker = value
 
     def copy(self):
         return copy.copy(self)
 
-    def speak_text(self, text):
+    async def speak_text(self, text):
         return self.voice.synthesize(
             text,
-            self.speaker,
             self.rate,
             self.volume,
             self.pitch,
         )
 
 
-@dataclass
-class PiperSpeechSynthesisTask(AudioTask):
-    """A pending request to synthesize a token."""
-
-    __slots__ = ["text", "speech_options"]
-
-    def __init__(self, text, speech_options):
-        self.text = text
-        self.speech_options = speech_options
-
-    def generate_audio(self):
-        return self.speech_options.speak_text(self.text)
-
-
 class PiperTextToSpeechSystem:
-
     def __init__(
         self, voices: Sequence[PiperVoice], speech_options: SpeechOptions = None
     ):
         self.voices = voices
-        if speech_options is None:
+        if speech_options is not None:
+            self.speech_options = speech_options
+        else:
             try:
                 voice = self.voices[0]
             except IndexError:
                 raise VoiceNotFoundError("No Piper voices found")
             self.speech_options = SpeechOptions(voice=voice)
-        else:
-            speech_options = speech_options
 
     def shutdown(self):
         pass
@@ -304,7 +332,9 @@ class PiperTextToSpeechSystem:
         if self.speech_options.voice.is_multi_speaker:
             return self.speech_options.voice.speaker_names
         else:
-            return [FALLBACK_SPEAKER_NAME, ]
+            return [
+                FALLBACK_SPEAKER_NAME,
+            ]
 
     def create_speech_task(self, text):
         return PiperSpeechSynthesisTask(text, self.speech_options.copy())
@@ -321,7 +351,9 @@ class PiperTextToSpeechSystem:
         )
 
     @classmethod
-    def load_voices_from_directory(cls, voices_directory, *, directory_name_prefix="voice-"):
+    def load_voices_from_directory(
+        cls, voices_directory, *, directory_name_prefix="voice-"
+    ):
         rv = []
         for directory in (d for d in Path(voices_directory).iterdir() if d.is_dir()):
             try:

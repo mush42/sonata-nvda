@@ -10,6 +10,7 @@ import contextlib
 
 PLUGIN_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 LIB_DIRECTORY = os.path.join(PLUGIN_DIRECTORY, "lib")
+BIN_DIRECTORY = os.path.join(PLUGIN_DIRECTORY, "bin")
 
 
 @contextlib.contextmanager
@@ -19,4 +20,3 @@ def import_bundled_library(lib_directory=LIB_DIRECTORY):
         yield
     finally:
         sys.path.remove(lib_directory)
-

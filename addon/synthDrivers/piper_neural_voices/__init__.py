@@ -3,8 +3,6 @@
 # Copyright (c) 2023 Musharraf Omer
 # This file is covered by the GNU General Public License.
 
-import tones
-
 import queue
 import sys
 import threading
@@ -15,20 +13,41 @@ from functools import partial
 from itertools import zip_longest
 
 import config
+import globalVars
 import languageHandler
 import nvwave
 import synthDriverHandler
 from autoSettingsUtils.driverSetting import DriverSetting, NumericDriverSetting
 from logHandler import log
 from speech.sayAll import SayAllHandler
-from speech.commands import (BreakCommand, CharacterModeCommand, IndexCommand,
-                             LangChangeCommand, RateCommand, VolumeCommand, PitchCommand)
-from synthDriverHandler import (SynthDriver, VoiceInfo, synthDoneSpeaking,
-                                synthIndexReached)
+from speech.commands import (
+    BreakCommand,
+    CharacterModeCommand,
+    IndexCommand,
+    LangChangeCommand,
+    RateCommand,
+    VolumeCommand,
+    PitchCommand,
+)
+from synthDriverHandler import (
+    SynthDriver,
+    VoiceInfo,
+    synthDoneSpeaking,
+    synthIndexReached,
+)
 
+
+from . import aio
+from . import grpc_client
 from ._config import PiperConfig
-from .tts_system import (PIPER_VOICE_SAMPLES_URL, AudioTask,
-                         PiperTextToSpeechSystem, SilenceTask, SpeakerNotFoundError)
+from .tts_system import (
+    PIPER_VOICE_SAMPLES_URL,
+    AudioTask,
+    PiperTextToSpeechSystem,
+    SilenceTask,
+    SpeakerNotFoundError,
+    SpeechOptions,
+)
 
 
 import addonHandler
@@ -36,109 +55,8 @@ import addonHandler
 addonHandler.initTranslation()
 
 
-
-class _EndOfSpeechSequence:
-    """Marker type to denote the end of speech sequence."""
-
-
-class ProcessSpeechTask:
-    __slots__ = ["task", "player", "is_canceled",]
-
-    def __init__(self, task, player, is_canceled):
-        self.task = task
-        self.player = player
-        self.is_canceled = is_canceled
-
-    def __call__(self):
-        if self.is_canceled():
-            return
-        speech_iter = self.task.generate_audio()
-        while True:
-            try:
-                if self.is_canceled():
-                    break
-                self.player.idle()
-                wave_samples = next(speech_iter)
-                self.player.feed(wave_samples.get_wave_bytes())
-            except StopIteration:
-                break
-
-
-class ProcessSpeechTaskSayAll:
-    __slots__ = ["task", "speech_idx", "player", "is_canceled", "on_index_reached",]
-
-    def __init__(self, task, speech_idx, player, on_index_reached, is_canceled):
-        self.task = task
-        self.speech_idx = speech_idx
-        self.player = player
-        self.on_index_reached = on_index_reached
-        self.is_canceled = is_canceled
-
-    def __call__(self):
-        if self.is_canceled():
-            return
-        self.player.stop()
-        speech_iter = zip_longest(self.task.generate_audio(), self.speech_idx)
-        while True:
-            try:
-                if self.is_canceled():
-                    break
-                (wave_samples, speech_index) = next(speech_iter)
-                log.info(f"RTF: {wave_samples.real_time_factor}")
-                if wave_samples:
-                    self.player.feed(wave_samples.get_wave_bytes())
-                if speech_index:
-                    self.on_index_reached(speech_index)
-            except StopIteration:
-                break
-
-
-class ProcessBreakTask:
-    __slots__ = ["task", "player", "is_canceled",]
-
-    def __init__(self, task, player, is_canceled):
-        self.task = task
-        self.player = player
-        self.is_canceled = is_canceled
-
-    def __call__(self):
-        if not self.is_canceled():
-            self.player.feed(self.task.generate_audio())
-
-
-class DoneSpeaking:
-    __slots__ = ["player", "on_index_reached", "is_canceled"]
-
-    def __init__(self, player, onIndexReached, is_canceled):
-        self.player = player
-        self.on_index_reached = onIndexReached
-        self.is_canceled = is_canceled
-
-    def __call__(self):
-        if self.is_canceled():
-            self.player.stop()
-        self.player.idle()
-        self.on_index_reached(None)
-
-
-class BgThread(threading.Thread):
-    def __init__(self, bgQueue):
-        super().__init__()
-        self._bgQueue = bgQueue
-        self.setDaemon(True)
-        self.start()
-
-    def run(self):
-        while True:
-            task = self._bgQueue.get()
-            if task is None:
-                break
-            try:
-                task()
-            except Exception:
-                log.error("Error running task from queue", exc_info=True)
-            self._bgQueue.task_done()
-
+# This should run from the check method
+grpc_client.initialize()
 
 
 def SpeakerSetting():
@@ -149,8 +67,87 @@ def SpeakerSetting():
         _("&Speaker"),
         availableInSettingsRing=True,
         # Translators: Label for a setting in synth settings ring.
-        displayName=_("Speaker")
+        displayName=_("Speaker"),
     )
+
+
+class DoneSpeaking:
+    __slots__ = ["player", "on_index_reached", "is_canceled"]
+
+    def __init__(self, player, onIndexReached, is_canceled):
+        self.player = player
+        self.on_index_reached = onIndexReached
+        self.is_canceled = is_canceled
+
+    async def __call__(self):
+        await aio.run_in_executor(self.player.idle)
+        await aio.run_in_executor(self.on_index_reached, None)
+
+
+class IndexReached:
+    def __init__(self, callback, index):
+        self.callback = callback
+        self.index = index
+
+    async def __call__(self):
+        await aio.run_in_executor(self.callback, self.index)
+
+
+class ProcessSpeechTask:
+    __slots__ = [
+        "task",
+        "player",
+        "is_canceled",
+    ]
+
+    def __init__(self, task, player, is_canceled):
+        self.task = task
+        self.player = player
+        self.is_canceled = is_canceled
+
+    async def __call__(self):
+        if self.is_canceled():
+            return
+        stream = await self.task.generate_audio()
+        async for wave_samples in stream:
+            await aio.run_in_executor(self.player.feed, wave_samples)
+        await aio.run_in_executor(self.player.idle)
+
+
+class ProcessBreakTask:
+    __slots__ = [
+        "task",
+        "player",
+        "is_canceled",
+    ]
+
+    def __init__(self, task, player, is_canceled):
+        self.task = task
+        self.player = player
+        self.is_canceled = is_canceled
+
+    async def __call__(self):
+        if not self.is_canceled():
+            await aio.run_in_executor(self.player.feed, self.task.generate_audio())
+            await aio.run_in_executor(self.player.idle)
+
+
+async def _process_speech_sequence(speech_seq, is_canceled):
+    if is_canceled():
+        return
+    for callable in speech_seq:
+        try:
+            await callable()
+        except aio.CancelledError:
+            log.debug(f"Canceld speech task {callable}", exc_info=True)
+        except:
+            log.exception(f"Failed to execute speech task {callable}", exc_info=True)
+
+
+@aio.asyncio_coroutine_to_concurrent_future
+async def process_speech(speech_seq, is_canceled):
+    speech_task = _process_speech_sequence(speech_seq, is_canceled)
+    return aio.ASYNCIO_EVENT_LOOP.create_task(speech_task)
 
 
 class SynthDriver(synthDriverHandler.SynthDriver):
@@ -173,7 +170,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         BreakCommand,
         RateCommand,
         VolumeCommand,
-        PitchCommand
+        PitchCommand,
     }
     supportedNotifications = {synthIndexReached, synthDoneSpeaking}
 
@@ -183,99 +180,73 @@ class SynthDriver(synthDriverHandler.SynthDriver):
 
     @classmethod
     def check(cls):
-        return any(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir())
+        try:
+            piper_grpc_server_version = grpc_client.check_grpc_server().result()
+        except:
+            log.exception(
+                f"Failed to connect to piper GRPC server. Synthesizer will not be available.",
+                exc_info=True,
+            )
+            return False
+        log.info("Connected to Piper GRPC server")
+        log.info(f"Piper GRPC server version: {piper_grpc_server_version}")
+        if not any(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir()):
+            log.error(
+                "No installed voices were found for Piper. Synthesizer will not be available."
+            )
+            return False
+        return True
 
     def __init__(self):
         super().__init__()
+        self._current_task = None
         self._rateBoost = False
         self.voices = PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir()
-        self.tts = PiperTextToSpeechSystem(self.voices)
-        self._bgQueue = queue.Queue()
-        self._bgThread = BgThread(self._bgQueue)
+        try:
+            voice_key = config.conf["speech"]["piper_neural_voices"]["voice"]
+            configured_voice = next(
+                filter(lambda v: v.key.startswith(voice_key), self.voices)
+            )
+        except (KeyError, StopIteration):
+            configured_voice = self.voices[0]
+        init_speech_options = SpeechOptions(voice=configured_voice)
+        self.tts = PiperTextToSpeechSystem(
+            self.voices, speech_options=init_speech_options
+        )
         self._silence_event = threading.Event()
         self._players = {}
-        self._default_voice_scales = {
-            self._get_variant_independent_voice_id(voice.key): tuple(round(s, 2) for s in (voice.noise_scale, voice.length_scale, voice.noise_w))
-            for voice in self.voices
-        }
         self._player = self._get_or_create_player(
             self.tts.speech_options.voice.sample_rate
         )
         self.availableLanguages = {v.language for v in self.voices}
         self._voice_map = {v.key: v for v in self.voices}
-        self.availableVoices, self.__voice_variants, self.__default_variants = self._get_voices_and_variants()
+        (
+            self.availableVoices,
+            self.__voice_variants,
+            self.__default_variants,
+        ) = self._get_voices_and_variants()
         self.__voice = None
 
     def terminate(self):
         self.cancel()
         self.tts.shutdown()
         for player in self._players.values():
-            self._bgQueue.put(player.close)
-        self._bgQueue.put(self._players.clear)
-        self._bgQueue.put(None)
-        self._bgThread.join()
+            player.close()
+        self._players.clear()
+        grpc_client.terminate()
 
     def speak(self, speechSequence):
-        return self.speak_say_all(speechSequence)
-
-    def speak_say_all(self, speechSequence):
-        default_lang = self.tts.language
-        text = []
-        speech_idx = []
-        for item in (*self.combine_adjacent_strings(speechSequence), _EndOfSpeechSequence):
-            item_type = type(item)
-            if item_type is str:
-                text.append(item)
-                continue
-            elif item_type is IndexCommand:
-                speech_idx.append(item.index)
-                continue
-            else:
-                self._bgQueue.put(
-                    ProcessSpeechTaskSayAll(
-                        self.tts.create_speech_task("".join(text)),
-                        tuple(speech_idx),
-                        self._player,
-                        self._on_index_reached,
-                        self._silence_event.is_set,
-                    )
-                )
-                text.clear()
-                speech_idx.clear()
-            if item_type is BreakCommand:
-                self._bgQueue.put(ProcessBreakTask(
-                    self.tts.create_break_task(item.time),
-                    self._player,
-                    self._silence_event.is_set,
-                ))
-            elif item_type is LangChangeCommand:
-                if item.isDefault:
-                    self.tts.language = default_lang
-                else:
-                    self.tts.language = item.lang
-            elif item_type is RateCommand:
-                self.tts.rate = item.newValue
-            elif item_type is VolumeCommand:
-                self.tts.volume = item.newValue
-            elif item_type is PitchCommand:
-                self.tts.pitch = item.newValue
-        self._bgQueue.put(
-            DoneSpeaking(
-                self._player, self._on_index_reached, self._silence_event.is_set
-            )
-        )
+        return self.speak_navigation(speechSequence)
 
     def speak_navigation(self, speechSequence):
-        self._bgQueue.put(
-            DoneSpeaking(
-                self._player, self._on_index_reached, self._silence_event.is_set
-            )
-        )
+        self.cancel()
+        self._silence_event.clear()
+        speech_seq = []
         default_lang = self.tts.language
         for item in self.combine_adjacent_strings(speechSequence):
             item_type = type(item)
             if item_type is str:
-                self._bgQueue.put(
+                speech_seq.append(
                     ProcessSpeechTask(
                         self.tts.create_speech_task(item),
                         self._player,
@@ -283,13 +254,15 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                     )
                 )
             elif item_type is IndexCommand:
-                self._bgQueue.put(partial(self._on_index_reached, item.index))
+                speech_seq.append(IndexReached(self._on_index_reached, item.index))
             elif item_type is BreakCommand:
-                self._bgQueue.put(ProcessBreakTask(
-                    self.tts.create_break_task(item.time),
-                    self._player,
-                    self._silence_event.is_set,
-                ))
+                speech_seq.append(
+                    ProcessBreakTask(
+                        self.tts.create_break_task(item.time),
+                        self._player,
+                        self._silence_event.is_set,
+                    )
+                )
             elif item_type is LangChangeCommand:
                 if item.isDefault:
                     self.tts.language = default_lang
@@ -301,28 +274,20 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 self.tts.volume = item.newValue
             elif item_type is PitchCommand:
                 self.tts.pitch = item.newValue
-        self._bgQueue.put(
+        speech_seq.append(
             DoneSpeaking(
                 self._player, self._on_index_reached, self._silence_event.is_set
             )
         )
+        self._current_task = process_speech(
+            speech_seq, self._silence_event.is_set
+        ).result()
 
     def cancel(self):
+        if self._current_task is not None:
+            aio.asyncio_cancel_task(self._current_task)
         self._silence_event.set()
         self._player.stop()
-        try:
-            while True:
-                task = self._bgQueue.get_nowait()
-                self._bgQueue.task_done()
-        except queue.Empty:
-            pass
-        self._bgQueue.put(
-            DoneSpeaking(
-                self._player, self._on_index_reached, self._silence_event.is_set
-            )
-        )
-        self._bgQueue.put(self._silence_event.clear)
-        self._bgQueue.join()
 
     def pause(self, switch):
         self._player.pause(switch)
@@ -408,15 +373,13 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         return factor
 
     def _set_noise_scale(self, value):
-        if self.__voice not in self._default_voice_scales:
-            return
-        default_noise_scale, __, __  = self._default_voice_scales[self.__voice]
+        voice = self.tts.speech_options.voice
+        default_noise_scale = voice.default_scales.noise_scale
         if value == 50:
             self.tts.speech_options.voice.noise_scale = default_noise_scale
         else:
             self.tts.speech_options.voice.noise_scale = max(
-                0.1,
-                round(self._percentToParam(value, 0.0, default_noise_scale * 3), 2)
+                0.1, round(self._percentToParam(value, 0.0, default_noise_scale * 3), 2)
             )
         self._noise_scale_factor = value
 
@@ -431,15 +394,14 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         return factor
 
     def _set_length_scale(self, value):
-        if self.__voice not in self._default_voice_scales:
-            return
-        __, default_length_scale, __  = self._default_voice_scales[self.__voice]
+        voice = self.tts.speech_options.voice
+        default_length_scale = voice.default_scales.length_scale
         if value == 50:
             self.tts.speech_options.voice.length_scale = default_length_scale
         else:
             self.tts.speech_options.voice.length_scale = max(
                 0.1,
-                round(self._percentToParam(value, 0.0, default_length_scale * 2), 2)
+                round(self._percentToParam(value, 0.0, default_length_scale * 2), 2),
             )
 
         self._length_scale_factor = value
@@ -459,15 +421,13 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         if factor and value == factor:
             return
 
-        if self.__voice not in self._default_voice_scales:
-            return
-        __, __, default_noise_w  = self._default_voice_scales[self.__voice]
+        voice = self.tts.speech_options.voice
+        default_noise_w = voice.default_scales.noise_w
         if value == 50:
             self.tts.speech_options.voice.noise_w = default_noise_w
         else:
             self.tts.speech_options.voice.noise_w = max(
-                0.1,
-                round(self._percentToParam(value, 0.0, default_noise_w * 3), 2)
+                0.1, round(self._percentToParam(value, 0.0, default_noise_w * 3), 2)
             )
         self._noise_w_factor = value
 
@@ -494,7 +454,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
 
         if speaker is not None:
             self._set_speaker(speaker)
-        
+
     def _get_language(self):
         return self.tts.language
 
@@ -519,11 +479,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
     def _getAvailableVariants(self):
         rv = OrderedDict()
         for (quality, vinfo) in self.__voice_variants[self.voice].items():
-            rv[quality] = VoiceInfo(
-                quality,
-                quality.title(),
-                vinfo.language
-            )
+            rv[quality] = VoiceInfo(quality, quality.title(), vinfo.language)
         return rv
 
     def _get_variant_independent_voice_id(self, voice_key):
@@ -537,9 +493,11 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             voice_id = self._get_variant_independent_voice_id(voice.key)
             quality = voice.properties["quality"]
             lang = languageHandler.normalizeLanguage(voice.language).replace("_", "-")
-            display_name =  f"{voice.name} ({lang})"
+            display_name = f"{voice.name} ({lang})"
             all_voices[voice_id] = VoiceInfo(voice_id, display_name, voice.language)
-            all_variants.setdefault(voice_id, {})[quality] = VoiceInfo(quality, quality.title(), voice.language)
+            all_variants.setdefault(voice_id, {})[quality] = VoiceInfo(
+                quality, quality.title(), voice.language
+            )
             default_variants.setdefault(voice_id, quality)
         return all_voices, all_variants, default_variants
 
@@ -554,7 +512,4 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             PiperConfig.setdefault(self.voice, {})["speaker"] = self.tts.speaker
 
     def _get_availableSpeakers(self):
-        return {
-            spk: VoiceInfo(spk, spk, None)
-            for spk in self.tts.get_speakers()
-        }
+        return {spk: VoiceInfo(spk, spk, None) for spk in self.tts.get_speakers()}

@@ -8,8 +8,7 @@ import re
 import sys
 from errno import EBADF, EINVAL, ELOOP, ENOENT, ENOTDIR
 from operator import attrgetter
-from stat import (S_ISBLK, S_ISCHR, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG,
-                  S_ISSOCK)
+from stat import S_ISBLK, S_ISCHR, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG, S_ISSOCK
 from urllib.parse import quote_from_bytes as urlquote_from_bytes
 
 from _collections_abc import Sequence
