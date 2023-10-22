@@ -3,26 +3,19 @@
 # Copyright (c) 2023 Musharraf Omer
 # This file is covered by the GNU General Public License.
 
-import queue
-import sys
 import threading
-import webbrowser
 from collections import OrderedDict
 from contextlib import suppress
 from functools import partial
-from itertools import zip_longest
 
 import config
-import globalVars
 import languageHandler
 import nvwave
 import synthDriverHandler
 from autoSettingsUtils.driverSetting import DriverSetting, NumericDriverSetting
 from logHandler import log
-from speech.sayAll import SayAllHandler
 from speech.commands import (
     BreakCommand,
-    CharacterModeCommand,
     IndexCommand,
     LangChangeCommand,
     RateCommand,
@@ -41,10 +34,7 @@ from . import aio
 from . import grpc_client
 from ._config import PiperConfig
 from .tts_system import (
-    PIPER_VOICE_SAMPLES_URL,
-    AudioTask,
     PiperTextToSpeechSystem,
-    SilenceTask,
     SpeakerNotFoundError,
     SpeechOptions,
 )
@@ -55,7 +45,6 @@ import addonHandler
 addonHandler.initTranslation()
 
 
-# This should run from the check method
 grpc_client.initialize()
 
 
@@ -85,12 +74,15 @@ class DoneSpeakingTask:
 
 
 class IndexReachedTask:
-    def __init__(self, callback, index):
+    __slots__ = ["callback", "index_list"]
+
+    def __init__(self, callback, index_list):
         self.callback = callback
-        self.index = index
+        self.index_list = index_list
 
     async def __call__(self):
-        await aio.run_in_executor(self.callback, self.index)
+        for index in self.index_list:
+            await aio.run_in_executor(self.callback, index)
 
 
 class SpeechTask:
@@ -148,6 +140,7 @@ async def _process_speech_sequence(speech_seq, is_canceled):
 async def process_speech(speech_seq, is_canceled):
     speech_task = _process_speech_sequence(speech_seq, is_canceled)
     return aio.ASYNCIO_EVENT_LOOP.create_task(speech_task)
+
 
 
 class SynthDriver(synthDriverHandler.SynthDriver):
@@ -236,29 +229,36 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._players.clear()
 
     def speak(self, speechSequence):
-        return self.speak_navigation(speechSequence)
+        return self._prepare_and_run_speech_task(speechSequence)
 
-    def speak_navigation(self, speechSequence):
+    def _prepare_and_run_speech_task(self, speechSequence):
         self.cancel()
         self._silence_event.clear()
         speech_seq = []
+        text_list = []
+        index_command_list = []
         default_lang = self.tts.language
         for item in self.combine_adjacent_strings(speechSequence):
             item_type = type(item)
-            if item_type is str:
+            if item_type is IndexCommand:
+                index_command_list.append(item.index)
+                continue
+            elif item_type is str:
+                text_list.append(item)
+                continue
+            if any(text_list):
                 speech_seq.append(
                     SpeechTask(
-                        self.tts.create_speech_task(item),
+                        self.tts.create_speech_provider("".join(text_list)),
                         self._player,
                         self._silence_event.is_set,
                     )
                 )
-            elif item_type is IndexCommand:
-                speech_seq.append(IndexReachedTask(self._on_index_reached, item.index))
-            elif item_type is BreakCommand:
+                text_list.clear()
+            if item_type is BreakCommand:
                 speech_seq.append(
                     BreakTask(
-                        self.tts.create_break_task(item.time),
+                        self.tts.create_break_provider(item.time),
                         self._player,
                         self._silence_event.is_set,
                     )
@@ -274,6 +274,16 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 self.tts.volume = item.newValue
             elif item_type is PitchCommand:
                 self.tts.pitch = item.newValue
+        if any(text_list):
+            speech_seq.append(
+                SpeechTask(
+                    self.tts.create_speech_provider("".join(text_list)),
+                    self._player,
+                    self._silence_event.is_set,
+                )
+            )
+        if any(index_command_list):
+            speech_seq.append(IndexReachedTask(self._on_index_reached, index_command_list))
         speech_seq.append(
             DoneSpeakingTask(
                 self._player, self._on_index_reached, self._silence_event.is_set

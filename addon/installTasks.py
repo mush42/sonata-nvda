@@ -4,7 +4,8 @@
 # This file is covered by the GNU General Public License.
 
 
-import wx
+import platform
+
 import gui
 
 
@@ -13,7 +14,7 @@ addonHandler.initTranslation()
 
 
 def onInstall():
-    if wx.GetCpuArchitectureName() != 'x64':
+    if platform.machine() != 'AMD64':
         gui.messageBox(
             # Translators: content of a message box
             _("32-bit system detected. Piper voices work on 64-bit systems only. Installation aborted!"),
@@ -22,4 +23,4 @@ def onInstall():
             wx.ICON_ERROR
         )
         raise RuntimeError("Unsupported OS architecture")
-    
+

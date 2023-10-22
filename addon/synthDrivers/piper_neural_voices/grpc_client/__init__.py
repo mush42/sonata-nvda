@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import asyncio
 import atexit
 import os
@@ -24,6 +26,10 @@ PIPER_GRPC_SERVICE = None
 
 def start_grpc_server():
     global GRPC_SERVER_PROCESS, PIPER_GRPC_SERVER_PORT
+    if hasattr(globalVars, "PIPER_GRPC_SERVER_PORT"):
+        PIPER_GRPC_SERVER_PORT = globalVars.PIPER_GRPC_SERVER_PORT
+        GRPC_SERVER_PROCESS = globalVars.GRPC_SERVER_PROCESS
+        return
     PIPER_GRPC_SERVER_PORT = find_free_port()
     grpc_server_exe = os.path.join(BIN_DIRECTORY, "piper-grpc.exe")
     nvda_espeak_dir = os.path.join(globalVars.appDir, "synthDrivers")
@@ -47,6 +53,8 @@ def start_grpc_server():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    globalVars.PIPER_GRPC_SERVER_PORT = PIPER_GRPC_SERVER_PORT
+    globalVars.GRPC_SERVER_PROCESS = GRPC_SERVER_PROCESS
 
 
 def initialize():

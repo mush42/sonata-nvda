@@ -4,15 +4,8 @@
 # This file is covered by the GNU General Public License.
 
 import copy
-import io
 import operator
 import os
-import re
-import string
-import sys
-import tarfile
-import typing
-import wave
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Mapping, Optional, Sequence, Union
@@ -29,6 +22,7 @@ with import_bundled_library():
     from pathlib import Path
 
 
+IGNORED_PUNCS = frozenset(",(){}[]`\"'")
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
 PIPER_VOICES_DIR = os.path.join(
     globalVars.appArgs.configPath, "piper", "voices", "v1.0"
@@ -48,25 +42,6 @@ class SpeakerNotFoundError(LookupError):
     pass
 
 
-class AudioTask(ABC):
-    @abstractmethod
-    def generate_audio(self) -> bytes:
-        """Generate audio."""
-
-
-class SilenceTask(AudioTask):
-    __slots__ = ["time_ms", "sample_rate"]
-
-    def __init__(self, time_ms, sample_rate):
-        self.time_ms = time_ms
-        self.sample_rate = sample_rate
-
-    async def generate_audio(self):
-        """Generate silence (16-bit mono at sample rate)."""
-        num_samples = int((self.time_ms / 1000.0) * self.sample_rate)
-        return bytes(num_samples * 2)
-
-
 @dataclass
 class Scales:
     length_scale: float
@@ -74,9 +49,28 @@ class Scales:
     noise_w: float
 
 
+class AudioProvider(ABC):
+    @abstractmethod
+    def generate_audio(self) -> bytes:
+        """Generate audio."""
+
+
+class SilenceProvider(AudioProvider):
+    __slots__ = ["time_ms", "sample_rate"]
+
+    def __init__(self, time_ms, sample_rate):
+        self.time_ms = time_ms
+        self.sample_rate = sample_rate
+
+    def generate_audio(self):
+        """Generate silence (16-bit mono at sample rate)."""
+        num_samples = int((self.time_ms / 1000.0) * self.sample_rate)
+        return bytes(num_samples * 2)
+
+
 @dataclass
-class PiperSpeechSynthesisTask(AudioTask):
-    """A pending request to synthesize a token."""
+class SpeechProvider(AudioProvider):
+    """A pending request to speak some text."""
 
     __slots__ = ["text", "speech_options"]
 
@@ -95,7 +89,7 @@ class PiperVoice:
     language: str
     description: str
     location: str
-    properties: typing.Optional[typing.Mapping[str, int]] = field(default_factory=dict)
+    properties: Optional[Mapping[str, int]] = field(default_factory=dict)
     remote_id: str = None
 
     @classmethod
@@ -180,6 +174,8 @@ class PiperVoice:
         grpc_client.set_synth_options(self.remote_id, noise_w=value).result()
 
     async def synthesize(self, text, rate, volume, pitch):
+        if (len(text) < 10) and (set(text.strip()).issubset(IGNORED_PUNCS)):
+            return
         stream = grpc_client.speak(
             voice_id=self.remote_id,
             text=text,
@@ -225,9 +221,6 @@ class SpeechOptions:
 
 
 class PiperTextToSpeechSystem:
-
-    VOICE_NAME_REGEX = re.compile(        r"voice(-|_)(?P<language>[a-z]+[_]?([a-z]+)?)(-|_)(?P<name>[a-z]+)(-|_)(?P<quality>(high|medium|low|x-low))"
-    )
 
     def __init__(
         self, voices: Sequence[PiperVoice], speech_options: SpeechOptions = None
@@ -344,11 +337,11 @@ class PiperTextToSpeechSystem:
                 FALLBACK_SPEAKER_NAME,
             ]
 
-    def create_speech_task(self, text):
-        return PiperSpeechSynthesisTask(text, self.speech_options.copy())
+    def create_speech_provider(self, text):
+        return SpeechProvider(text, self.speech_options.copy())
 
-    def create_break_task(self, time_ms):
-        return SilenceTask(time_ms, self.speech_options.voice.sample_rate)
+    def create_break_provider(self, time_ms):
+        return SilenceProvider(time_ms, self.speech_options.voice.sample_rate)
 
     @classmethod
     def load_piper_voices_from_nvda_config_dir(cls):
@@ -371,36 +364,3 @@ class PiperTextToSpeechSystem:
             rv.append(voice)
         return rv
 
-    @classmethod
-    def install_voice(cls, voice_archive_path, dest_dir):
-        """Uniform handleing of voice tar archives."""
-        archive_path = Path(voice_archive_path)
-        voice_name = archive_path.name.rstrip("".join(archive_path.suffixes))
-        match = cls.VOICE_NAME_REGEX.match(voice_name)
-        if match is None:
-            raise ValueError(f"Invalid voice archive: `{archive_path}`")
-        info = match.groupdict()
-        language = info["language"]
-        name = info["name"]
-        quality = info["quality"]
-        voice_key = f"{language}-{name}-{quality}"
-        with tarfile.open(os.fspath(archive_path), "r:gz") as tar:
-            members = tar.getmembers()
-            try:
-                m_onnx_model = next(m for m in members if m.name.endswith(".onnx"))
-                m_model_config = next(
-                    m for m in members if m.name.endswith(".onnx.json")
-                )
-            except StopIteration:
-                raise ValueError(f"Invalid voice archive: `{archive_path}`")
-            dst = Path(dest_dir).joinpath(voice_key)
-            dst.mkdir(parents=True, exist_ok=True)
-            tar.extract(m_onnx_model, path=os.fspath(dst), set_attrs=False)
-            tar.extract(m_model_config, path=os.fspath(dst), set_attrs=False)
-            try:
-                m_model_card = next(m for m in members if m.name.endswith("MODEL_CARD"))
-            except StopIteration:
-                pass
-            else:
-                tar.extract(m_model_card, path=os.fspath(dst), set_attrs=False)
-            return voice_key

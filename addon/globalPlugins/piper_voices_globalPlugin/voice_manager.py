@@ -9,19 +9,23 @@
 import functools
 import operator
 import os
+import re
 import shutil
+import tarfile
 import tempfile
 import threading
+import winsound
 
 import wx
 from wx.adv import CommandLinkButton
 import gui
-import nvwave
 import synthDriverHandler
+from languageHandler import normalizeLanguage
 from logHandler import log
 
 from . import PiperTextToSpeechSystem, PIPER_VOICES_DIR
 from . import voice_download
+from . import aio
 from . import helpers
 from .components import AsyncSnakDialog, ColumnDefn, ImmutableObjectListView, SimpleDialog, make_sized_static_box
 from .sized_controls import SizedPanel
@@ -29,6 +33,15 @@ from .sized_controls import SizedPanel
 
 with helpers.import_bundled_library():
     import miniaudio
+    from pathlib import Path
+
+
+VOICE_INFO_REGEX = re.compile(
+    r"(?P<language>[a-z]+(_|-)?([a-z]+)?)(-|_)"
+    r"(?P<name>[a-z]+)(-|_)"
+    r"(?P<quality>(high|medium|low|x-low|x_low))",
+    re.I
+)
 
 
 class InstalledPiperVoicesPanel(SizedPanel):
@@ -197,7 +210,7 @@ class InstalledPiperVoicesPanel(SizedPanel):
         if not filepath:
             return
         try:
-            voice_key = PiperTextToSpeechSystem.install_voice(
+            voice_key = self.install_voice_from_tar_archive(
                 filepath, PIPER_VOICES_DIR
             )
         except:
@@ -219,6 +232,45 @@ class InstalledPiperVoicesPanel(SizedPanel):
                 _("Voice installed successfully"),
                 style=wx.ICON_INFORMATION,
             )
+            self.update_voices_list(set_focus=True, invalidate_synth_voices_cache=True)
+
+    @staticmethod
+    def install_voice_from_tar_archive(tar_path, voices_dir):
+        tar = tarfile.open(tar_path)
+        filenames = {f.name: f for f in tar.getmembers()}
+        try:
+            onnx_file = next(filter(
+                lambda fname:  Path(fname).suffix == ".onnx",
+                filenames
+            ))
+            config_file = next(filter(
+                lambda fname:  Path(fname).suffix == ".json",
+                filenames
+            ))
+        except StopIteration:
+            raise FileNotFoundError("Required files not found in archive")
+        voice_info = VOICE_INFO_REGEX.match(Path(onnx_file).stem)
+        if voice_info is None:
+            raise FileNotFoundError("Required files not found in archive")
+        info = voice_info.groupdict()
+        voice_key = "-".join([
+            normalizeLanguage(info["language"]),
+            info["name"].replace("-", "_"),
+            info["quality"].replace("-", "_"),
+        ])
+        voice_folder_name = Path(voices_dir).joinpath(voice_key)
+        voice_folder_name.mkdir(parents=True, exist_ok=True)
+        voice_folder_name = os.fspath(voice_folder_name)
+        files_to_extract = [onnx_file, config_file]
+        if "MODEL_CARD" in filenames:
+            files_to_extract.append("MODEL_CARD")
+        for file in files_to_extract:
+            tar.extract(
+                filenames[file],
+                path=voice_folder_name,
+                set_attrs=False,
+            )
+        return voice_key
 
 
 class OnlinePiperVoicesPanel(SizedPanel):
@@ -251,11 +303,8 @@ class OnlinePiperVoicesPanel(SizedPanel):
         preview_box.SetSizerType("horizontal")
         wx.StaticText(preview_box, -1, _("Speaker"))
         self.speaker_choice = wx.Choice(preview_box, -1, choices=[])
-        # Translators: label of a button to listen to a sample
-        self._preview_label = _("&Play")
-        # Translators: label of a button to stop listening to a sample
-        self._preview_stop_label = _("&Stop")
-        preview_btn = wx.Button(preview_box, -1, self._preview_label)
+        # Translators: label of a button
+        preview_btn = wx.Button(preview_box, -1, _("&Preview"))
         # Translators: label of a button to download the voice
         download_btn = wx.Button(self.buttons_panel, -1, _("&Download voice"))
         # Translators: label of a button to refresh the voices list
@@ -312,7 +361,6 @@ class OnlinePiperVoicesPanel(SizedPanel):
         self.speaker_choice.Enable(False)
 
     def on_voice_selected(self, event):
-        stop_playback()
         self.speaker_choice.SetItems([])
         selected_voice = self.voices_list.get_selected()
         if selected_voice is None:
@@ -326,39 +374,24 @@ class OnlinePiperVoicesPanel(SizedPanel):
             self.speaker_choice.Enable(False)
 
     def on_speaker_selection_changed(self, event):
-        stop_playback()
+        pass
 
     def on_preview(self, event):
         selected_voice = self.voices_list.get_selected()
         if selected_voice is None:
             return
-
-        preview_btn = event.GetEventObject()
-        if preview_btn.GetLabel() == self._preview_stop_label:
-            stop_playback()
-            preview_btn.SetLabel(self._preview_label)
-            return
-
-        def _callback(future):
-            try:
-                decoded_file = future.result()
-                with tempfile.TemporaryDirectory() as tempdir:
-                    mp3file = os.path.join(tempdir, "speaker_0.mp3")
-                    miniaudio.wav_write_file(mp3file, decoded_file)
-                    nvwave.playWaveFile(mp3file, asynchronous=True)
-            except:
-                log.exception("Failed to retrieve/play voice preview", exc_info=True)
-            finally:
-                preview_btn.SetLabel(self._preview_label)
-
         speaker_idx = 0
         if selected_voice.num_speakers > 1:
             speaker_idx = self.speaker_choice.GetSelection()
         mp3url = selected_voice.get_preview_url(speaker_idx=speaker_idx)
-        preview_btn.SetLabel(self._preview_stop_label)
-        voice_download.THREAD_POOL_EXECUTOR.submit(
-            self.get_preview_audio, mp3url
-        ).add_done_callback(_callback)
+        AsyncSnakDialog(
+            # Translators: message in a dialog
+            message=_("Playing preview..."),
+            executor=aio.THREADED_EXECUTOR,
+            func=functools.partial(play_remote_mp3, mp3url),
+            done_callback=lambda future: True,
+            parent=self.GetTopLevelParent()
+        )
 
     def on_download(self, event):
 
@@ -387,13 +420,6 @@ class OnlinePiperVoicesPanel(SizedPanel):
         ))
         self.language_choice.SetItems([lang.description for lang in self.languages])
         self.__already_populated.set()
-
-    @staticmethod
-    def get_preview_audio(mp3_url):
-        stop_playback()
-        resp = voice_download.request.get(mp3_url)
-        resp.raise_for_status()
-        return miniaudio.decode(resp.body, nchannels=1, sample_rate=22050)
 
 
 class PiperVoiceManagerDialog(SimpleDialog):
@@ -448,6 +474,16 @@ class PiperVoiceManagerDialog(SimpleDialog):
             panel = self.notebookCtrl.GetPage(i)
             panel.invalidate_cache()
 
-def stop_playback():
-    if nvwave.fileWavePlayer is not None:
-        nvwave.fileWavePlayer.stop()
+
+def play_remote_mp3(mp3_url):
+    resp = voice_download.request.get(mp3_url)
+    resp.raise_for_status()
+    decoded_file = miniaudio.decode(resp.body, nchannels=1, sample_rate=22050)
+    with tempfile.TemporaryDirectory() as tempdir:
+        wav_file = os.path.join(tempdir, "speaker_0.wav")
+        miniaudio.wav_write_file(wav_file, decoded_file)
+        winsound.PlaySound(
+            wav_file,
+            winsound.SND_FILENAME | winsound.SND_PURGE
+        )
+
