@@ -71,7 +71,7 @@ def SpeakerSetting():
     )
 
 
-class DoneSpeaking:
+class DoneSpeakingTask:
     __slots__ = ["player", "on_index_reached", "is_canceled"]
 
     def __init__(self, player, onIndexReached, is_canceled):
@@ -84,7 +84,7 @@ class DoneSpeaking:
         await aio.run_in_executor(self.on_index_reached, None)
 
 
-class IndexReached:
+class IndexReachedTask:
     def __init__(self, callback, index):
         self.callback = callback
         self.index = index
@@ -93,7 +93,7 @@ class IndexReached:
         await aio.run_in_executor(self.callback, self.index)
 
 
-class ProcessSpeechTask:
+class SpeechTask:
     __slots__ = [
         "task",
         "player",
@@ -114,7 +114,7 @@ class ProcessSpeechTask:
         await aio.run_in_executor(self.player.idle)
 
 
-class ProcessBreakTask:
+class BreakTask:
     __slots__ = [
         "task",
         "player",
@@ -247,17 +247,17 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             item_type = type(item)
             if item_type is str:
                 speech_seq.append(
-                    ProcessSpeechTask(
+                    SpeechTask(
                         self.tts.create_speech_task(item),
                         self._player,
                         self._silence_event.is_set,
                     )
                 )
             elif item_type is IndexCommand:
-                speech_seq.append(IndexReached(self._on_index_reached, item.index))
+                speech_seq.append(IndexReachedTask(self._on_index_reached, item.index))
             elif item_type is BreakCommand:
                 speech_seq.append(
-                    ProcessBreakTask(
+                    BreakTask(
                         self.tts.create_break_task(item.time),
                         self._player,
                         self._silence_event.is_set,
@@ -275,7 +275,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             elif item_type is PitchCommand:
                 self.tts.pitch = item.newValue
         speech_seq.append(
-            DoneSpeaking(
+            DoneSpeakingTask(
                 self._player, self._on_index_reached, self._silence_event.is_set
             )
         )
