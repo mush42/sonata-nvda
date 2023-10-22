@@ -6,7 +6,7 @@ import time
 
 import globalVars
 
-from ..helpers import BIN_DIRECTORY, import_bundled_library
+from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
 
 
 with import_bundled_library():
@@ -16,19 +16,21 @@ with import_bundled_library():
     from .grpc_protos import piper_grpc_pb2 as msgs
 
 
-PORT = 49314
+PIPER_GRPC_SERVER_PORT = None
 GRPC_SERVER_PROCESS = None
 CHANNEL = None
 PIPER_GRPC_SERVICE = None
 
 
 def start_grpc_server():
-    global GRPC_SERVER_PROCESS
+    global GRPC_SERVER_PROCESS, PIPER_GRPC_SERVER_PORT
+    PIPER_GRPC_SERVER_PORT = find_free_port()
     grpc_server_exe = os.path.join(BIN_DIRECTORY, "piper-grpc.exe")
     nvda_espeak_dir = os.path.join(globalVars.appDir, "synthDrivers")
     onnx_dll_path = os.path.join(BIN_DIRECTORY, "onnxruntime.dll")
     env = os.environ.copy()
     env.update({
+        "PIPER_GRPC_SERVER_PORT": str(PIPER_GRPC_SERVER_PORT),
         "PIPER_ESPEAKNG_DATA_DIRECTORY": os.fspath(nvda_espeak_dir),
         "ORT_DYLIB_PATH": os.fspath(onnx_dll_path)
     })
@@ -47,20 +49,25 @@ def start_grpc_server():
     )
 
 
-def initialize(port=PORT):
-    global CHANNEL, PIPER_GRPC_SERVICE
+def initialize():
+    global CHANNEL, PIPER_GRPC_SERVICE, PIPER_GRPC_SERVER_PORT
     start_grpc_server()
     aio.initialize()
     if CHANNEL is not None:
         log.warning("Attempted to re-initialize an already initialized GRPC connection")
         return
-    CHANNEL = Channel("localhost", port, loop=aio.ASYNCIO_EVENT_LOOP)
+    CHANNEL = Channel(
+        "localhost",
+        PIPER_GRPC_SERVER_PORT,
+        loop=aio.ASYNCIO_EVENT_LOOP
+    )
     PIPER_GRPC_SERVICE = piper_grpcStub(CHANNEL)
 
 
 @atexit.register
 def terminate():
-    global GRPC_SERVER_PROCESS, CHANNEL
+    global CHANNEL, GRPC_SERVER_PROCESS, PIPER_GRPC_SERVER_PORT
+    PIPER_GRPC_SERVER_PORT = None
     aio.terminate()
     if CHANNEL is not None:
         CHANNEL.close()

@@ -188,6 +188,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 exc_info=True,
             )
             return False
+        log.info(f"Piper GRPC server running on port {grpc_client.PIPER_GRPC_SERVER_PORT}")
         log.info("Connected to Piper GRPC server")
         log.info(f"Piper GRPC server version: {piper_grpc_server_version}")
         if not any(PiperTextToSpeechSystem.load_piper_voices_from_nvda_config_dir()):
