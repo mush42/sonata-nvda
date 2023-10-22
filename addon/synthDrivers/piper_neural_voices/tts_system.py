@@ -286,6 +286,8 @@ class PiperTextToSpeechSystem:
     def language(self, new_language: str):
         """Set the current voice language"""
         lang = normalizeLanguage(new_language)
+        if self.speech_options.voice.language == lang:
+            return
         lang_code = lang.split("-")[0] + "-"
         possible_voices = []
         for voice in self.voices:
