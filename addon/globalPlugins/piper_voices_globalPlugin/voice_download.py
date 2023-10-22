@@ -310,6 +310,7 @@ def get_available_voices(force_online=False):
             return voice_objs
     resp = request.get(PIPER_VOICE_LIST_URL)
     resp.raise_for_status()
-    with open(PIPER_VOICES_JSON_LOCAL_CACHE, "wb") as file:
-        file.write(resp.body)
+    with open(PIPER_VOICES_JSON_LOCAL_CACHE, "w", encoding="utf-8") as file:
+        data = json.loads(resp.body)
+        json.dump(data, file, ensure_ascii=False, indent=2)
     return get_available_voices()

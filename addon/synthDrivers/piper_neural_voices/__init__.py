@@ -233,7 +233,6 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         for player in self._players.values():
             player.close()
         self._players.clear()
-        grpc_client.terminate()
 
     def speak(self, speechSequence):
         return self.speak_navigation(speechSequence)

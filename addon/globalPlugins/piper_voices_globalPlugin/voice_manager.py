@@ -360,7 +360,7 @@ class PiperVoiceManagerDialog(SimpleDialog):
             ),
             (
                 # Translators: label of a tab in a tab control
-                _("Downloadable"),
+                _("Download"),
                 OnlinePiperVoicesPanel(self.notebookCtrl),
             ),
         ]
