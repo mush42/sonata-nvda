@@ -30,9 +30,16 @@ from synthDriverHandler import (
 )
 
 
-from . import aio
 from . import grpc_client
 from ._config import PiperConfig
+from .aio import (
+    ASYNCIO_EVENT_LOOP,
+    CancelledError,
+    asyncio_cancel_task,
+    asyncio_coroutine_to_concurrent_future,
+    run_in_executor,
+)
+
 from .tts_system import (
     PiperTextToSpeechSystem,
     SpeakerNotFoundError,
@@ -69,8 +76,8 @@ class DoneSpeakingTask:
         self.is_canceled = is_canceled
 
     async def __call__(self):
-        await aio.run_in_executor(self.player.idle)
-        await aio.run_in_executor(self.on_index_reached, None)
+        await run_in_executor(self.player.idle)
+        await run_in_executor(self.on_index_reached, None)
 
 
 class IndexReachedTask:
@@ -82,7 +89,7 @@ class IndexReachedTask:
 
     async def __call__(self):
         for index in self.index_list:
-            await aio.run_in_executor(self.callback, index)
+            await run_in_executor(self.callback, index)
 
 
 class SpeechTask:
@@ -102,8 +109,8 @@ class SpeechTask:
             return
         stream = await self.task.generate_audio()
         async for wave_samples in stream:
-            await aio.run_in_executor(self.player.feed, wave_samples)
-        await aio.run_in_executor(self.player.idle)
+            await run_in_executor(self.player.feed, wave_samples)
+        await run_in_executor(self.player.idle)
 
 
 class BreakTask:
@@ -120,8 +127,8 @@ class BreakTask:
 
     async def __call__(self):
         if not self.is_canceled():
-            await aio.run_in_executor(self.player.feed, self.task.generate_audio())
-            await aio.run_in_executor(self.player.idle)
+            await run_in_executor(self.player.feed, self.task.generate_audio())
+            await run_in_executor(self.player.idle)
 
 
 async def _process_speech_sequence(speech_seq, is_canceled):
@@ -130,16 +137,16 @@ async def _process_speech_sequence(speech_seq, is_canceled):
     for callable in speech_seq:
         try:
             await callable()
-        except aio.CancelledError:
+        except CancelledError:
             log.debug(f"Canceld speech task {callable}", exc_info=True)
         except:
             log.exception(f"Failed to execute speech task {callable}", exc_info=True)
 
 
-@aio.asyncio_coroutine_to_concurrent_future
+@asyncio_coroutine_to_concurrent_future
 async def process_speech(speech_seq, is_canceled):
     speech_task = _process_speech_sequence(speech_seq, is_canceled)
-    return aio.ASYNCIO_EVENT_LOOP.create_task(speech_task)
+    return ASYNCIO_EVENT_LOOP.create_task(speech_task)
 
 
 
@@ -295,7 +302,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
 
     def cancel(self):
         if self._current_task is not None:
-            aio.asyncio_cancel_task(self._current_task)
+            asyncio_cancel_task(self._current_task)
         self._silence_event.set()
         self._player.stop()
 
