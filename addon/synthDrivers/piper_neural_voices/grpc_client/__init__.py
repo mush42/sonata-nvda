@@ -29,7 +29,7 @@ def start_grpc_server():
     if hasattr(globalVars, "PIPER_GRPC_SERVER_PORT"):
         PIPER_GRPC_SERVER_PORT = globalVars.PIPER_GRPC_SERVER_PORT
         GRPC_SERVER_PROCESS = globalVars.GRPC_SERVER_PROCESS
-        return
+        return True
     PIPER_GRPC_SERVER_PORT = find_free_port()
     grpc_server_exe = os.path.join(BIN_DIRECTORY, "piper-grpc.exe")
     nvda_espeak_dir = os.path.join(globalVars.appDir, "synthDrivers")
@@ -45,16 +45,24 @@ def start_grpc_server():
         | subprocess.CREATE_NEW_PROCESS_GROUP
         | subprocess.REALTIME_PRIORITY_CLASS
     )
-    GRPC_SERVER_PROCESS = subprocess.Popen(
-        args=grpc_server_exe,
-        cwd=os.fspath(BIN_DIRECTORY),
-        env=env,
-        creationflags=creationflags,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    try:
+        GRPC_SERVER_PROCESS = subprocess.Popen(
+            args=grpc_server_exe,
+            cwd=os.fspath(BIN_DIRECTORY),
+            env=env,
+            creationflags=creationflags,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except:
+        log.exception(
+            "Failed to start Piper GRPC server. The synth will not be available.",
+            exc_info=True
+        )
+        return False
     globalVars.PIPER_GRPC_SERVER_PORT = PIPER_GRPC_SERVER_PORT
     globalVars.GRPC_SERVER_PROCESS = GRPC_SERVER_PROCESS
+    return True
 
 
 def initialize():
