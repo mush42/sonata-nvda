@@ -49,7 +49,7 @@ addon_info = {
 }
 
 pythonSources = [
-    "addon/globalPlugins/*.py",
+    "addon/globalPlugins/*/*.py",
     "addon/synthDrivers/*/*.*"
 ]
 

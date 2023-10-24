@@ -1,0 +1,342 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the 'piper_neural_voices' package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 'piper_neural_voices' '2.0-beta'\n"
+"Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
+"POT-Creation-Date: 2023-10-24 10:14-0500\n"
+"PO-Revision-Date: 2023-10-24 10:36-0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#. Translators: label of a menu item
+#: addon\globalPlugins\piper_voices_globalPlugin\__init__.py:47
+msgid "Piper voice &manager..."
+msgstr "Administrador de voces &Piper..."
+
+#. Translators: Piper's voice manager menu item help
+#: addon\globalPlugins\piper_voices_globalPlugin\__init__.py:49
+msgid "Open the voice manager to preview, install or download piper voices"
+msgstr "Abrir el administrador de voces para probar, instalar o descargar voces piper"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\__init__.py:65
+msgid ""
+"No Piper voice was found.\n"
+"You can preview and download voices from the voice manager.\n"
+"Do you want to open the voice manager now?"
+msgstr ""
+"No se encontró una voz piper.\n"
+"Puedes probar o descargar voces desde el administrador de voces.\n"
+"¿Quieres abrir el administrador de voces ahora?"
+
+#. Translators: title of a message telling the user that no Piper voice was found
+#. Add-on summary, usually the user visible name of the addon.
+#. Translators: Summary for this add-on
+#. to be shown on installation and add-on information found in Add-ons Manager.
+#: addon\globalPlugins\piper_voices_globalPlugin\__init__.py:70 buildVars.py:23
+msgid "Piper Neural Voices"
+msgstr "Voces Neuronales Piper"
+
+#. Translators: the label of the OK button in a dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\components.py:86
+msgid "OK"
+msgstr "Aceptar"
+
+#. Translators: the label of the cancel button in a dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\components.py:89
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. Translators: message of a progress dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:168
+#, python-brace-format
+msgid "Downloaded: {progress}%"
+msgstr "Descargado: {progress}%"
+
+#. Translators: message shown in the voice download progress dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:177
+msgid "Installing voice"
+msgstr "Instalando voz"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:206
+#, python-brace-format
+msgid ""
+"Successfully downloaded voice  {voice}.\n"
+"To use this voice, you need to restart NVDA.\n"
+"Do you want to restart NVDA now?"
+msgstr ""
+"La voz {voice} se ha descargado con éxito.\n"
+"Para usar esta voz, necesitas reiniciar NVDA.\n"
+"¿Quieres reiniciar NVDA ahora?"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:213
+msgid "Voice downloaded"
+msgstr "Voz descargada"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:222
+#, python-brace-format
+msgid ""
+"Cannot download voice {voice}.\n"
+"Please check your connection and try again."
+msgstr ""
+"La voz {voice} no se ha podido descargar.\n"
+"Por favor, verifica tu conexión e inténtalo de nuevo."
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:224
+msgid "Download failed"
+msgstr "Descarga fallida"
+
+#. Translators: title of a progress dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:234
+#, python-brace-format
+msgid "Downloading voice {voice}"
+msgstr "Descargando la voz {voice}"
+
+#. Translators: message of a progress dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:238
+msgid "Retrieving download information..."
+msgstr "Recopilando información de la descarga..."
+
+#. Translators: message shown in progress dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_download.py:250
+#, python-brace-format
+msgid "Downloading file: {file}"
+msgstr "Descargando archivo: {file}"
+
+#. Add controls
+#. Translators: label for a list of installed voices
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:53
+msgid "Installed voices"
+msgstr "Voces instaladas"
+
+#. Translators: list view column title
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:59
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:289
+msgid "Name"
+msgstr "Nombre"
+
+#. Translators: list view column title
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:62
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:291
+msgid "Quality"
+msgstr "Calidad"
+
+#. Translators: list view column title
+#. Build controls
+#. Translators: label of a choice
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:65
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:284
+msgid "Language"
+msgstr "Idioma"
+
+#. Translators: label for a button for showing voice model card
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:71
+msgid "&Voice model card..."
+msgstr "&Tarjeta de modelo de la voz..."
+
+#. Translators: label for a button for removing a voice
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:73
+msgid "&Remove voice..."
+msgstr "&Eliminar voz..."
+
+#. Translators: the main label of the install button
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:78
+msgid "Install from local file"
+msgstr "Instalar desde un archivo local"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:81
+msgid ""
+"Install a voice from a local archive.\n"
+"The archive contains the voice model and configuration.\n"
+"The archive should have a (.tar.gz) file extension."
+msgstr ""
+"Instala una voz desde un archivo local.\n"
+"El archivo contiene el modelo de voz y su configuración.\n"
+"El archivo debe tener una extensión (.tar.gz)."
+
+#. ! Intentionally untranslatable
+#. Translators: title of a message box showing voice model card
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:129
+msgid "Model card"
+msgstr "Targeta de modelo"
+
+#. Translators: content of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:135
+msgid "Model card information is unavailable for this voice"
+msgstr "La información de la tarjeta de modelo no está disponible para esta voz"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:137
+msgid "Not found"
+msgstr "No encontrado"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:154
+msgid "You cannot remove the currently active voice!"
+msgstr "¡No puedes eliminar la voz actualmente en ejecución!"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:156
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:342
+msgid "Error"
+msgstr "Error"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:163
+#, python-brace-format
+msgid ""
+"Do you want to remove this voice?\n"
+"Voice: {name}"
+msgstr ""
+"¿Quieres eliminar esta voz?\n"
+"voz: {name}"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:167
+msgid "Remove voice?"
+msgstr "¿Eliminar voz?"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:177
+msgid ""
+"Failed to remove voice.\n"
+"See NVDA's log for more details."
+msgstr ""
+"Se produjo un error al eliminar la voz.\n"
+"Por favor, verifica el registro de NVDA para más detalles."
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:179
+msgid "Failed"
+msgstr "Fallido"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:185
+msgid "Voice removed successfully."
+msgstr "La voz se ha eliminado con éxito."
+
+#. Translators: title of a message box
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:187
+msgid "Done"
+msgstr "Echo"
+
+#. Translators: title for a dialog for opening a file
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:196
+msgid "Choose voice archive file "
+msgstr "Selecciona el archivo de voz "
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:221
+msgid "Failed to install voice from archive. See NVDA's log for more details."
+msgstr "Se produjo un error al instalar la voz desde el archivo. verifica el registro de NVDA para más detalles."
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:223
+msgid "Voice installation failed"
+msgstr "Instalación de voz fallida"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:230
+#, python-brace-format
+msgid "Voice {voice} has been installed successfully."
+msgstr "La voz {voice} ha sido instalada con éxito."
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:232
+msgid "Voice installed successfully"
+msgstr "Voz instalada satisfactoriamente"
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:286
+msgid "Available voices"
+msgstr "Voces disponibles"
+
+#. Translators: header of a group of controls for previewing the voice
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:302
+msgid "Preview"
+msgstr "Probar"
+
+#. Translators: Label for a setting in synth settings ring.
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:304
+#: addon\synthDrivers\piper_neural_voices\__init__.py:66
+msgid "Speaker"
+msgstr "Hablante"
+
+#. Translators: label of a button
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:307
+msgid "&Preview"
+msgstr "&Probar"
+
+#. Translators: label of a button to download the voice
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:309
+msgid "&Download voice"
+msgstr "&Descargar voces"
+
+#. Translators: label of a button to refresh the voices list
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:311
+msgid "&Refresh voices list"
+msgstr "&Refrescar lista de voces"
+
+#. Translators: message in a dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:330
+msgid "Retrieving voices list. Please wait..."
+msgstr "Recopilando lista de voces. Por favor espera..."
+
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:341
+msgid ""
+"Could not retrieve voice list.\n"
+"Please check your connection and try again."
+msgstr ""
+"No se ha podido recopilar la lista de voces.\n"
+"Por favor, verifica tu conexión e inténtalo nuevamente."
+
+#. Translators: message in a dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:389
+msgid "Playing preview..."
+msgstr "Reproduciendo prueba..."
+
+#. Translators: title of voice manager dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:431
+msgid "Piper voice manager"
+msgstr "Administrador de voces Piper"
+
+#. Translators: label of a tab in a tab control
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:442
+msgid "Installed"
+msgstr "Instalado"
+
+#. Translators: label of a tab in a tab control
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:447
+msgid "Download"
+msgstr "Descargar"
+
+#. Translators: the label of the close button in a dialog
+#: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:463
+msgid "&Close"
+msgstr "&Cerrar"
+
+#. Translators: Label for a setting in voice settings dialog.
+#: addon\synthDrivers\piper_neural_voices\__init__.py:63
+msgid "&Speaker"
+msgstr "&Hablante"
+
+#: addon\synthDrivers\piper_neural_voices\__init__.py:163
+msgid "&Noise scale"
+msgstr "&Escala de ruido"
+
+#: addon\synthDrivers\piper_neural_voices\__init__.py:164
+msgid "&Length scale"
+msgstr "&Escala de duración"
+
+#: addon\synthDrivers\piper_neural_voices\__init__.py:165
+msgid "Noise &w"
+msgstr "Ruido de anchura"
+
+#. Add-on description
+#. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
+#: buildVars.py:26
+msgid "Neural voices for NVDA based on Piper"
+msgstr "Voces neuronales para NVDA basado en piper"
