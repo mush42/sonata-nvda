@@ -15,23 +15,12 @@ from languageHandler import normalizeLanguage
 
 from . import aio
 from . import grpc_client
+from .const import *
 from .helpers import import_bundled_library, LIB_DIRECTORY
-
 
 with import_bundled_library():
     from pathlib import Path
 
-
-IGNORED_PUNCS = frozenset(",(){}[]`\"'")
-PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
-PIPER_VOICES_DIR = os.path.join(
-    globalVars.appArgs.configPath, "piper", "voices", "v1.0"
-)
-BATCH_SIZE = max(os.cpu_count() // 2, 2)
-FALLBACK_SPEAKER_NAME = "default"
-DEFAULT_RATE = 50
-DEFAULT_VOLUME = 100
-DEFAULT_PITCH = 50
 
 
 class VoiceNotFoundError(LookupError):

@@ -7,11 +7,14 @@ import subprocess
 import time
 
 import globalVars
+from logHandler import log
 
+from ..const import PIPER_VOICES_BASE_DIR
 from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
 
 
 with import_bundled_library():
+    from pathlib import Path
     from grpclib.client import Channel
     from .. import aio
     from .grpc_protos.piper_grpc_grpc import piper_grpcStub
@@ -38,7 +41,8 @@ def start_grpc_server():
     env.update({
         "PIPER_GRPC_SERVER_PORT": str(PIPER_GRPC_SERVER_PORT),
         "PIPER_ESPEAKNG_DATA_DIRECTORY": os.fspath(nvda_espeak_dir),
-        "ORT_DYLIB_PATH": os.fspath(onnx_dll_path)
+        "ORT_DYLIB_PATH": os.fspath(onnx_dll_path),
+        "PIPER_GRPC": "info",
     })
     creationflags = (
         subprocess.DETACHED_PROCESS
@@ -46,13 +50,20 @@ def start_grpc_server():
         | subprocess.REALTIME_PRIORITY_CLASS
     )
     try:
+        server_log_file = os.path.join(PIPER_VOICES_BASE_DIR, "logs", "piper-grpc.log")
+        Path(server_log_file).parent.mkdir(parents=True, exist_ok=True)
+        server_stdout = open(server_log_file, "wb")
+    except:
+        log.exception("Failed to open server log file for writing", exc_info=True)
+        server_stdout = subprocess.DEVNULL
+    try:
         GRPC_SERVER_PROCESS = subprocess.Popen(
             args=grpc_server_exe,
             cwd=os.fspath(BIN_DIRECTORY),
             env=env,
             creationflags=creationflags,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=server_stdout,
+            stderr=subprocess.STDOUT,
         )
     except:
         log.exception(
