@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import asyncio
+
 import atexit
 import os
 import subprocess
@@ -12,6 +12,7 @@ from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
 
 
 with import_bundled_library():
+    import asyncio
     from grpclib.client import Channel
     from .. import aio
     from .grpc_protos.piper_grpc_grpc import piper_grpcStub

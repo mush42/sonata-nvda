@@ -5,7 +5,7 @@
 
 
 import platform
-
+import subprocess
 import gui
 
 
@@ -14,6 +14,10 @@ addonHandler.initTranslation()
 
 
 def onInstall():
+    # Fix active piper GRPC process when add-on updates:
+    processes = subprocess.check_output("tasklist", universal_newlines=True)
+    if "piper-grpc.exe" in processes:
+        subprocess.run(f"taskkill /F /IM piper-grpc.exe", shell=True)
     if platform.machine() != 'AMD64':
         gui.messageBox(
             # Translators: content of a message box

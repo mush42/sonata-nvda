@@ -273,7 +273,7 @@ msgstr "&Probar"
 #. Translators: label of a button to download the voice
 #: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:309
 msgid "&Download voice"
-msgstr "&Descargar voces"
+msgstr "&Descargar voz"
 
 #. Translators: label of a button to refresh the voices list
 #: addon\globalPlugins\piper_voices_globalPlugin\voice_manager.py:311

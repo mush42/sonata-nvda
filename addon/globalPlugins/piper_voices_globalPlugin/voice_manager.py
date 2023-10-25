@@ -35,6 +35,10 @@ with helpers.import_bundled_library():
     import miniaudio
     from pathlib import Path
 
+import addonHandler
+
+addonHandler.initTranslation()
+
 
 VOICE_INFO_REGEX = re.compile(
     r"(?P<language>[a-z]+(_|-)?([a-z]+)?)(-|_)"
