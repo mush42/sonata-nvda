@@ -29,7 +29,7 @@ from piper_neural_voices.tts_system import (
     PIPER_VOICES_DIR,
 )
 sys.path.remove(_TTS_MODULE_DIR)
-
+del _DIR, _ADDON_ROOT, _TTS_MODULE_DIR
 
 from .voice_manager import PiperVoiceManagerDialog
 
