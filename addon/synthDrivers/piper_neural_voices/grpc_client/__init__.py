@@ -14,6 +14,7 @@ from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
 
 
 with import_bundled_library():
+    import asyncio
     from pathlib import Path
     from grpclib.client import Channel
     from .. import aio

@@ -21,6 +21,8 @@ import os
 import globalVars
 
 
+# An utterance is ignored if it only contains the following chars
+# Eventually, this should be moved to piper-rs
 IGNORED_PUNCS = frozenset(",(){}[]`\"'")
 PIPER_VOICES_VERSION = "v1.0"
 PIPER_VOICE_SAMPLES_URL = "https://rhasspy.github.io/piper-samples/"
