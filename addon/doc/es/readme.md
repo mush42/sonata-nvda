@@ -27,20 +27,16 @@ Cada voz está disponible como un archivo `.tar.gz`, que es un formato de archiv
 
 Ten en cuenta que te recomendamos seleccionar las voces con la calidad  `low` o `x-low` para tu(s) idioma(s) de destino, ya que estas proporcionan un mejor rendimiento.
 
-After downloading a voice, go to NVDA settings, and choose `Piper` category, and then click the button labled `Install from file`. Choose the file you downloaded, wait for the voice to install, and restart NVDA to refresh the voices list.
+Después de descargar una voz, ve a las opciones de NVDA, y selecciona la categoría `Piper`, y luego haz clic en el botón etiquetado como `Instalar desde un archivo local`. Selecciona el archivo que descargaste, espera a que la voz se instale, y reinicia NVDA para refrescar la lista de voces.
 
-## A note on voice quality
+## Una nota acerca de la calidad de la voz
 
-The currently available voices are trained using freely available TTS datasets, which are generally of low quality (mostly public domain audio books or research quality recordings).
+Las voces actualmente disponibles están entrenadas usando conjuntos de datos para TTS gratuitos que, generalmente, son de baja calidad (en su mayoría audiolibros bajo dominio público o grabaciones de calidad para investigación).
 
-Additionally, these datasets are not comprehensive, hence some voices may exhibit incorrect or weird pronunciation. Both issues could be resolved by using better datasets for training.
+Agregando que, estos conjuntos de datos no son precisos, por lo que algunas voces pueden presentar una pronunciación incorrecta o extraña. Ambos problemas podrían resolverse utilizando mejores conjuntos de datos para el entrenamiento.
 
-Luckily, the `Piper` developer and some developers from the blind and vision-impaired community are working on training better voices.
+Con suerte, el desarrollador de `Piper` y algunos desarrolladores de la comunidad de personas ciegas y deficiencia visual están trabajando en entrenar mejores voces.
 
-# A note on add-on's performance
+# Licencia
 
-The current release is a technical preview. Soon enough the add-on will be rewritten in `Rust`, a programming language that provides better performance than `Python`.
-
-# License
-
-Copyright(c) 2023, Musharraf Omer. This software is licensed under The GNU GENERAL PUBLIC LICENSE Version 2 (GPL v2).
+Copyright(c) 2023, Musharraf Omer. Este software está licenciado bajo la GNU GENERAL PUBLIC LICENSE Version 2 (GPL v2).

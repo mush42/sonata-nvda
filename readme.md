@@ -37,10 +37,6 @@ Additionally, these datasets are not comprehensive, hence some voices may exhibi
 
 Luckily, the `Piper` developer and some developers from the blind and vision-impaired community are working on training better voices.
 
-# A note on add-on's performance
-
-The current release is a technical preview. Soon enough the add-on will be rewritten in `Rust`, a programming language that provides better performance than `Python`.
-
 # License
 
 Copyright(c) 2023, Musharraf Omer. This software is licensed under The GNU GENERAL PUBLIC LICENSE Version 2 (GPL v2).
