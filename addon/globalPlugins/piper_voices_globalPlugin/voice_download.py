@@ -30,6 +30,10 @@ with helpers.import_bundled_library():
     from concurrent.futures import ThreadPoolExecutor
     from pathlib import Path
 
+import addonHandler
+
+addonHandler.initTranslation()
+
 
 PIPER_VOICE_LIST_URL = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
