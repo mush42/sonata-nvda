@@ -1,6 +1,5 @@
 # coding: utf-8
 
-
 import atexit
 import os
 import subprocess
@@ -118,10 +117,9 @@ async def get_piper_version():
 
 
 @aio.asyncio_coroutine_to_concurrent_future
-async def load_voice(onnx_path, config_path=None):
-    req = msgs.VoicePath(onnx_path=onnx_path, config_path=config_path)
+async def load_voice(config_path):
+    req = msgs.VoicePath(config_path=config_path)
     return await PIPER_GRPC_SERVICE.LoadVoice(req)
-    return await PIPER_GRPC_SERVICE.SetSynthesisOptions(req)
 
 
 @aio.asyncio_coroutine_to_concurrent_future
@@ -147,7 +145,7 @@ async def set_synth_options(
 
 
 async def speak(
-    voice_id, text, rate=None, volume=None, pitch=None, appended_silence_ms=None
+    voice_id, text, rate=None, volume=None, pitch=None, appended_silence_ms=None, streaming=False
 ):
     speech_args = None
     if any([rate, volume, pitch, appended_silence_ms]):
@@ -162,7 +160,11 @@ async def speak(
         text=text,
         speech_args=speech_args,
     )
-    async with PIPER_GRPC_SERVICE.SynthesizeUtterance.open() as stream:
+    if streaming:
+        stream = PIPER_GRPC_SERVICE.SynthesizeUtteranceRealtime.open()
+    else:
+        stream = PIPER_GRPC_SERVICE.SynthesizeUtterance.open()
+    async with stream:
         await stream.send_message(utterance, end=True)
         async for ret in stream:
             yield ret

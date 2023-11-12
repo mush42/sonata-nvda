@@ -6,7 +6,6 @@ import typing
 
 import grpclib.const
 import grpclib.client
-
 if typing.TYPE_CHECKING:
     import grpclib.server
 
@@ -14,124 +13,124 @@ from . import piper_grpc_pb2
 
 
 class piper_grpcBase(abc.ABC):
+
     @abc.abstractmethod
-    async def GetPiperVersion(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.Empty, piper_grpc_pb2.Version]",
-    ) -> None:
+    async def GetPiperVersion(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.Empty, piper_grpc_pb2.Version]') -> None:
         pass
 
     @abc.abstractmethod
-    async def LoadVoice(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.VoicePath, piper_grpc_pb2.VoiceInfo]",
-    ) -> None:
+    async def LoadVoice(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.VoicePath, piper_grpc_pb2.VoiceInfo]') -> None:
         pass
 
     @abc.abstractmethod
-    async def GetVoiceInfo(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.VoiceIdentifier, piper_grpc_pb2.VoiceInfo]",
-    ) -> None:
+    async def GetVoiceInfo(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.VoiceIdentifier, piper_grpc_pb2.VoiceInfo]') -> None:
         pass
 
     @abc.abstractmethod
-    async def GetSynthesisOptions(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.VoiceIdentifier, piper_grpc_pb2.SynthesisOptions]",
-    ) -> None:
+    async def GetSynthesisOptions(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.VoiceIdentifier, piper_grpc_pb2.SynthesisOptions]') -> None:
         pass
 
     @abc.abstractmethod
-    async def SetSynthesisOptions(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.VoiceSynthesisOptions, piper_grpc_pb2.SynthesisOptions]",
-    ) -> None:
+    async def SetSynthesisOptions(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.VoiceSynthesisOptions, piper_grpc_pb2.SynthesisOptions]') -> None:
         pass
 
     @abc.abstractmethod
-    async def SynthesizeUtterance(
-        self,
-        stream: "grpclib.server.Stream[piper_grpc_pb2.Utterance, piper_grpc_pb2.SynthesisResult]",
-    ) -> None:
+    async def SynthesizeUtterance(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.Utterance, piper_grpc_pb2.SynthesisResult]') -> None:
+        pass
+
+    @abc.abstractmethod
+    async def SynthesizeUtteranceRealtime(self, stream: 'grpclib.server.Stream[piper_grpc_pb2.Utterance, piper_grpc_pb2.WaveSamples]') -> None:
         pass
 
     def __mapping__(self) -> typing.Dict[str, grpclib.const.Handler]:
         return {
-            "/piper_grpc.piper_grpc/GetPiperVersion": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/GetPiperVersion': grpclib.const.Handler(
                 self.GetPiperVersion,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 piper_grpc_pb2.Empty,
                 piper_grpc_pb2.Version,
             ),
-            "/piper_grpc.piper_grpc/LoadVoice": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/LoadVoice': grpclib.const.Handler(
                 self.LoadVoice,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 piper_grpc_pb2.VoicePath,
                 piper_grpc_pb2.VoiceInfo,
             ),
-            "/piper_grpc.piper_grpc/GetVoiceInfo": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/GetVoiceInfo': grpclib.const.Handler(
                 self.GetVoiceInfo,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 piper_grpc_pb2.VoiceIdentifier,
                 piper_grpc_pb2.VoiceInfo,
             ),
-            "/piper_grpc.piper_grpc/GetSynthesisOptions": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/GetSynthesisOptions': grpclib.const.Handler(
                 self.GetSynthesisOptions,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 piper_grpc_pb2.VoiceIdentifier,
                 piper_grpc_pb2.SynthesisOptions,
             ),
-            "/piper_grpc.piper_grpc/SetSynthesisOptions": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/SetSynthesisOptions': grpclib.const.Handler(
                 self.SetSynthesisOptions,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 piper_grpc_pb2.VoiceSynthesisOptions,
                 piper_grpc_pb2.SynthesisOptions,
             ),
-            "/piper_grpc.piper_grpc/SynthesizeUtterance": grpclib.const.Handler(
+            '/piper_grpc.piper_grpc/SynthesizeUtterance': grpclib.const.Handler(
                 self.SynthesizeUtterance,
                 grpclib.const.Cardinality.UNARY_STREAM,
                 piper_grpc_pb2.Utterance,
                 piper_grpc_pb2.SynthesisResult,
             ),
+            '/piper_grpc.piper_grpc/SynthesizeUtteranceRealtime': grpclib.const.Handler(
+                self.SynthesizeUtteranceRealtime,
+                grpclib.const.Cardinality.UNARY_STREAM,
+                piper_grpc_pb2.Utterance,
+                piper_grpc_pb2.WaveSamples,
+            ),
         }
 
 
 class piper_grpcStub:
+
     def __init__(self, channel: grpclib.client.Channel) -> None:
         self.GetPiperVersion = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/piper_grpc.piper_grpc/GetPiperVersion",
+            '/piper_grpc.piper_grpc/GetPiperVersion',
             piper_grpc_pb2.Empty,
             piper_grpc_pb2.Version,
         )
         self.LoadVoice = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/piper_grpc.piper_grpc/LoadVoice",
+            '/piper_grpc.piper_grpc/LoadVoice',
             piper_grpc_pb2.VoicePath,
             piper_grpc_pb2.VoiceInfo,
         )
         self.GetVoiceInfo = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/piper_grpc.piper_grpc/GetVoiceInfo",
+            '/piper_grpc.piper_grpc/GetVoiceInfo',
             piper_grpc_pb2.VoiceIdentifier,
             piper_grpc_pb2.VoiceInfo,
         )
         self.GetSynthesisOptions = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/piper_grpc.piper_grpc/GetSynthesisOptions",
+            '/piper_grpc.piper_grpc/GetSynthesisOptions',
             piper_grpc_pb2.VoiceIdentifier,
             piper_grpc_pb2.SynthesisOptions,
         )
         self.SetSynthesisOptions = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/piper_grpc.piper_grpc/SetSynthesisOptions",
+            '/piper_grpc.piper_grpc/SetSynthesisOptions',
             piper_grpc_pb2.VoiceSynthesisOptions,
             piper_grpc_pb2.SynthesisOptions,
         )
         self.SynthesizeUtterance = grpclib.client.UnaryStreamMethod(
             channel,
-            "/piper_grpc.piper_grpc/SynthesizeUtterance",
+            '/piper_grpc.piper_grpc/SynthesizeUtterance',
             piper_grpc_pb2.Utterance,
             piper_grpc_pb2.SynthesisResult,
+        )
+        self.SynthesizeUtteranceRealtime = grpclib.client.UnaryStreamMethod(
+            channel,
+            '/piper_grpc.piper_grpc/SynthesizeUtteranceRealtime',
+            piper_grpc_pb2.Utterance,
+            piper_grpc_pb2.WaveSamples,
         )

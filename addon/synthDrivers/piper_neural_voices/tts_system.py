@@ -57,7 +57,6 @@ class SilenceProvider(AudioProvider):
         return bytes(num_samples * 2)
 
 
-@dataclass
 class SpeechProvider(AudioProvider):
     """A pending request to speak some text."""
 
@@ -80,6 +79,7 @@ class PiperVoice:
     location: str
     properties: Optional[Mapping[str, int]] = field(default_factory=dict)
     remote_id: str = None
+    supports_streaming_output: bool = False
 
     @classmethod
     def from_path(cls, path):
@@ -102,16 +102,16 @@ class PiperVoice:
         if self.remote_id:
             return
         try:
-            self.model_path = next(self.location.glob("*.onnx"))
             self.config_path = next(self.location.glob("*.onnx.json"))
         except StopIteration:
             raise RuntimeError(
                 f"Could not load voice from `{os.fspath(self.location)}`"
             )
         voice_info = grpc_client.load_voice(
-            os.fspath(self.model_path), os.fspath(self.config_path)
+            os.fspath(self.config_path)
         ).result()
         self.remote_id = voice_info.voice_id
+        self.supports_streaming_output = voice_info.supports_streaming_output
         default_synth_options = voice_info.synth_options
         self.default_scales = Scales(
             length_scale=default_synth_options.length_scale,
@@ -162,7 +162,7 @@ class PiperVoice:
     def noise_w(self, value):
         grpc_client.set_synth_options(self.remote_id, noise_w=value).result()
 
-    async def synthesize(self, text, rate, volume, pitch):
+    async def synthesize(self, text, rate, volume, pitch, sentence_silence_ms):
         if (len(text) < 10) and (set(text.strip()).issubset(IGNORED_PUNCS)):
             return
         stream = grpc_client.speak(
@@ -171,19 +171,22 @@ class PiperVoice:
             rate=rate,
             volume=volume,
             pitch=pitch,
+            appended_silence_ms=sentence_silence_ms,
+            streaming=self.supports_streaming_output
         )
         async for ret in stream:
             yield ret.wav_samples
 
 
 class SpeechOptions:
-    __slots__ = ["voice", "rate", "volume", "pitch"]
+    __slots__ = ["voice", "rate", "volume", "pitch", "sentence_silence_ms"]
 
-    def __init__(self, voice, speaker=None, rate=None, volume=None, pitch=None):
+    def __init__(self, voice, speaker=None, rate=None, volume=None, pitch=None, sentence_silence_ms=None):
         self.set_voice(voice)
         self.rate = rate
         self.volume = volume
         self.pitch = pitch
+        self.sentence_silence_ms = sentence_silence_ms
 
     def set_voice(self, voice: PiperVoice):
         voice.load()
@@ -206,6 +209,7 @@ class SpeechOptions:
             self.rate,
             self.volume,
             self.pitch,
+            self.sentence_silence_ms
         )
 
 

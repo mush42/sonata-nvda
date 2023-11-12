@@ -3,17 +3,16 @@
 # Copyright (c) 2023 Musharraf Omer
 # This file is covered by the GNU General Public License.
 
-import threading
 from collections import OrderedDict
 from contextlib import suppress
-from functools import partial
 
 import config
 import languageHandler
-import nvwave
 import synthDriverHandler
 from autoSettingsUtils.driverSetting import DriverSetting, NumericDriverSetting
+from nvwave import WavePlayer
 from logHandler import log
+from speech import sayAll
 from speech.commands import (
     BreakCommand,
     IndexCommand,
@@ -29,7 +28,6 @@ from synthDriverHandler import (
     synthIndexReached,
 )
 
-
 from . import grpc_client
 from ._config import PiperConfig
 from .aio import (
@@ -39,13 +37,11 @@ from .aio import (
     asyncio_coroutine_to_concurrent_future,
     run_in_executor,
 )
-
 from .tts_system import (
     PiperTextToSpeechSystem,
     SpeakerNotFoundError,
     SpeechOptions,
-)
-
+)    
 
 import addonHandler
 
@@ -68,12 +64,11 @@ def SpeakerSetting():
 
 
 class DoneSpeakingTask:
-    __slots__ = ["player", "on_index_reached", "is_canceled"]
+    __slots__ = ["player", "on_index_reached",]
 
-    def __init__(self, player, onIndexReached, is_canceled):
+    def __init__(self, player, onIndexReached):
         self.player = player
         self.on_index_reached = onIndexReached
-        self.is_canceled = is_canceled
 
     async def __call__(self):
         await run_in_executor(self.player.idle)
@@ -96,44 +91,39 @@ class SpeechTask:
     __slots__ = [
         "task",
         "player",
-        "is_canceled",
     ]
 
-    def __init__(self, task, player, is_canceled):
+    def __init__(self, task, player):
         self.task = task
         self.player = player
-        self.is_canceled = is_canceled
 
     async def __call__(self):
-        if self.is_canceled():
-            return
-        stream = await self.task.generate_audio()
-        async for wave_samples in stream:
-            await run_in_executor(self.player.feed, wave_samples)
-        await run_in_executor(self.player.idle)
+        if sayAll.SayAllHandler.isRunning():
+            self.task.text = self.task.text.replace("\n", " ")
+            self.task.speech_options.sentence_silence_ms = 50
+        speech_stream = await self.task.generate_audio()
+        feed_func = self.player.feed
+        async for wave_samples in speech_stream:
+            await run_in_executor(feed_func, wave_samples)
+        self.player.sync()
 
 
 class BreakTask:
     __slots__ = [
         "task",
         "player",
-        "is_canceled",
     ]
 
-    def __init__(self, task, player, is_canceled):
+    def __init__(self, task, player):
         self.task = task
         self.player = player
-        self.is_canceled = is_canceled
 
     async def __call__(self):
-        if not self.is_canceled():
-            await run_in_executor(self.player.feed, self.task.generate_audio())
-            await run_in_executor(self.player.idle)
+        await run_in_executor(self.player.feed, self.task.generate_audio())
+        await run_in_executor(self.player.sync)
 
 
-async def _process_speech_sequence(speech_seq, is_canceled):
-    if is_canceled():
-        return
+async def _process_speech_sequence(speech_seq):
     for callable in speech_seq:
         try:
             await callable()
@@ -144,8 +134,8 @@ async def _process_speech_sequence(speech_seq, is_canceled):
 
 
 @asyncio_coroutine_to_concurrent_future
-async def process_speech(speech_seq, is_canceled):
-    speech_task = _process_speech_sequence(speech_seq, is_canceled)
+async def process_speech(speech_seq):
+    speech_task = _process_speech_sequence(speech_seq)
     return ASYNCIO_EVENT_LOOP.create_task(speech_task)
 
 
@@ -214,7 +204,6 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self.tts = PiperTextToSpeechSystem(
             self.voices, speech_options=init_speech_options
         )
-        self._silence_event = threading.Event()
         self._players = {}
         self._player = self._get_or_create_player(
             self.tts.speech_options.voice.sample_rate
@@ -236,16 +225,15 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._players.clear()
 
     def speak(self, speechSequence):
-        return self._prepare_and_run_speech_task(speechSequence)
+        return self._fast_prepare_and_run_speech_task(speechSequence)
 
     def _prepare_and_run_speech_task(self, speechSequence):
         self.cancel()
-        self._silence_event.clear()
         speech_seq = []
         text_list = []
         index_command_list = []
         default_lang = self.tts.language
-        for item in self.combine_adjacent_strings(speechSequence):
+        for item in speechSequence:
             item_type = type(item)
             if item_type is IndexCommand:
                 index_command_list.append(item.index)
@@ -258,7 +246,6 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                     SpeechTask(
                         self.tts.create_speech_provider("".join(text_list)),
                         self._player,
-                        self._silence_event.is_set,
                     )
                 )
                 text_list.clear()
@@ -267,7 +254,6 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                     BreakTask(
                         self.tts.create_break_provider(item.time),
                         self._player,
-                        self._silence_event.is_set,
                     )
                 )
             elif item_type is LangChangeCommand:
@@ -286,24 +272,81 @@ class SynthDriver(synthDriverHandler.SynthDriver):
                 SpeechTask(
                     self.tts.create_speech_provider("".join(text_list)),
                     self._player,
-                    self._silence_event.is_set,
                 )
             )
         if any(index_command_list):
             speech_seq.append(IndexReachedTask(self._on_index_reached, index_command_list))
         speech_seq.append(
             DoneSpeakingTask(
-                self._player, self._on_index_reached, self._silence_event.is_set
+                self._player, self._on_index_reached
             )
         )
         self._current_task = process_speech(
-            speech_seq, self._silence_event.is_set
+            speech_seq
+        ).result()
+
+    # Experiment
+    def _fast_prepare_and_run_speech_task(self, speechSequence):
+        self.cancel()
+        speech_seq = []
+        text_list = []
+        index_command_list = []
+        default_lang = self.tts.language
+        for item in speechSequence:
+            item_type = type(item)
+            if item_type is IndexCommand:
+                index_command_list.append(item.index)
+                continue
+            elif item_type is str:
+                text_list.append(item)
+                continue
+            if any(text_list):
+                speech_seq.append(
+                    SpeechTask(
+                        self.tts.create_speech_provider("\n".join(text_list)),
+                        self._player,
+                    )
+                )
+                text_list.clear()
+            if item_type is BreakCommand:
+                speech_seq.append(
+                    BreakTask(
+                        self.tts.create_break_provider(item.time),
+                        self._player,
+                    )
+                )
+            elif item_type is LangChangeCommand:
+                if item.isDefault:
+                    self.tts.language = default_lang
+                else:
+                    self.tts.language = item.lang
+            elif item_type is RateCommand:
+                self.tts.rate = item.newValue
+            elif item_type is VolumeCommand:
+                self.tts.volume = item.newValue
+            elif item_type is PitchCommand:
+                self.tts.pitch = item.newValue
+        if any(text_list):
+            speech_seq.append(
+                SpeechTask(
+                    self.tts.create_speech_provider("\n".join(text_list)),
+                    self._player,
+                )
+            )
+        if any(index_command_list):
+            speech_seq.append(IndexReachedTask(self._on_index_reached, index_command_list))
+        speech_seq.append(
+            DoneSpeakingTask(
+                self._player, self._on_index_reached
+            )
+        )
+        self._current_task = process_speech(
+            speech_seq
         ).result()
 
     def cancel(self):
         if self._current_task is not None:
             asyncio_cancel_task(self._current_task)
-        self._silence_event.set()
         self._player.stop()
 
     def pause(self, switch):
@@ -315,6 +358,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         else:
             synthDoneSpeaking.notify(synth=self)
 
+    # Not used anymore
     def combine_adjacent_strings(self, lst):
         """Taken from IBMTTS add-on."""
         result = []
@@ -333,13 +377,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
 
     def _get_or_create_player(self, sample_rate):
         if sample_rate not in self._players:
-            self._players[sample_rate] = nvwave.WavePlayer(
-                channels=1,
-                samplesPerSec=sample_rate,
-                bitsPerSample=16,
-                outputDevice=config.conf["speech"]["outputDevice"],
-                buffered=True,
-            )
+            self._players[sample_rate] = create_wave_player(sample_rate)
         return self._players[sample_rate]
 
     def _get_rateBoost(self):
@@ -530,3 +568,13 @@ class SynthDriver(synthDriverHandler.SynthDriver):
 
     def _get_availableSpeakers(self):
         return {spk: VoiceInfo(spk, spk, None) for spk in self.tts.get_speakers()}
+
+
+def create_wave_player(sample_rate):
+    return WavePlayer(
+        channels=1,
+        samplesPerSec=sample_rate,
+        bitsPerSample=16,
+        outputDevice=config.conf["speech"]["outputDevice"],
+        buffered=True,
+    )
