@@ -10,11 +10,9 @@ from logHandler import log
 
 from ..const import PIPER_VOICES_BASE_DIR
 from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
-
+from pathlib import Path
 
 with import_bundled_library():
-    import asyncio
-    from pathlib import Path
     from grpclib.client import Channel
     from .. import aio
     from .grpc_protos.piper_grpc_grpc import piper_grpcStub

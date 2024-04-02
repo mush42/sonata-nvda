@@ -5,13 +5,9 @@ import threading
 import typing as t
 from functools import wraps, partial
 from logHandler import log
-from .helpers import import_bundled_library
 
-
-with import_bundled_library():
-    import asyncio
-    from concurrent.futures import CancelledError, ThreadPoolExecutor
-
+import asyncio
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 
 THREADED_EXECUTOR = None
 ASYNCIO_EVENT_LOOP = asyncio.new_event_loop()
