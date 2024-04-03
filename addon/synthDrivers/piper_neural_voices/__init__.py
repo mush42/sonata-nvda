@@ -37,6 +37,7 @@ from .aio import (
     asyncio_coroutine_to_concurrent_future,
     run_in_executor,
 )
+import asyncio
 from .tts_system import (
     PiperTextToSpeechSystem,
     SpeakerNotFoundError,
@@ -127,7 +128,7 @@ async def _process_speech_sequence(speech_seq):
     for callable in speech_seq:
         try:
             await callable()
-        except CancelledError:
+        except (CancelledError, asyncio.exceptions.CancelledError):
             log.debug(f"Canceld speech task {callable}", exc_info=True)
         except:
             log.exception(f"Failed to execute speech task {callable}", exc_info=True)
