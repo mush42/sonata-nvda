@@ -10,11 +10,9 @@ from logHandler import log
 
 from ..const import PIPER_VOICES_BASE_DIR
 from ..helpers import BIN_DIRECTORY, find_free_port, import_bundled_library
-
-
+from pathlib import Path
+import asyncio
 with import_bundled_library():
-    import asyncio
-    from pathlib import Path
     from grpclib.client import Channel
     from .. import aio
     from .grpc_protos.piper_grpc_grpc import piper_grpcStub
@@ -107,7 +105,7 @@ def terminate():
 @aio.asyncio_coroutine_to_concurrent_future
 async def check_grpc_server(timeout=30) -> str:
     return await asyncio.wait_for(
-        get_piper_version(), timeout, loop=aio.ASYNCIO_EVENT_LOOP
+        get_piper_version(), timeout
     )
 
 

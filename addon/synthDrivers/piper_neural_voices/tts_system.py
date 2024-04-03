@@ -18,8 +18,7 @@ from . import grpc_client
 from .const import *
 from .helpers import import_bundled_library, LIB_DIRECTORY
 
-with import_bundled_library():
-    from pathlib import Path
+from pathlib import Path
 
 
 

@@ -45,7 +45,7 @@ details for ALL pure-Python protocol buffers are *here in
 this file*.
 """
 
-__author__ = "robinson@google.com (Will Robinson)"
+__author__ = 'robinson@google.com (Will Robinson)'
 
 
 from google.protobuf import message_factory
@@ -60,36 +60,36 @@ MESSAGE_CLASS_CACHE = {}
 
 # Deprecated. Please NEVER use reflection.ParseMessage().
 def ParseMessage(descriptor, byte_str):
-    """Generate a new Message instance from this Descriptor and a byte string.
+  """Generate a new Message instance from this Descriptor and a byte string.
 
-    DEPRECATED: ParseMessage is deprecated because it is using MakeClass().
-    Please use MessageFactory.GetPrototype() instead.
+  DEPRECATED: ParseMessage is deprecated because it is using MakeClass().
+  Please use MessageFactory.GetPrototype() instead.
 
-    Args:
-      descriptor: Protobuf Descriptor object
-      byte_str: Serialized protocol buffer byte string
+  Args:
+    descriptor: Protobuf Descriptor object
+    byte_str: Serialized protocol buffer byte string
 
-    Returns:
-      Newly created protobuf Message object.
-    """
-    result_class = MakeClass(descriptor)
-    new_msg = result_class()
-    new_msg.ParseFromString(byte_str)
-    return new_msg
+  Returns:
+    Newly created protobuf Message object.
+  """
+  result_class = MakeClass(descriptor)
+  new_msg = result_class()
+  new_msg.ParseFromString(byte_str)
+  return new_msg
 
 
 # Deprecated. Please NEVER use reflection.MakeClass().
 def MakeClass(descriptor):
-    """Construct a class object for a protobuf described by descriptor.
+  """Construct a class object for a protobuf described by descriptor.
 
-    DEPRECATED: use MessageFactory.GetPrototype() instead.
+  DEPRECATED: use MessageFactory.GetPrototype() instead.
 
-    Args:
-      descriptor: A descriptor.Descriptor object describing the protobuf.
-    Returns:
-      The Message class object described by the descriptor.
-    """
-    # Original implementation leads to duplicate message classes, which won't play
-    # well with extensions. Message factory info is also missing.
-    # Redirect to message_factory.
-    return message_factory.GetMessageClass(descriptor)
+  Args:
+    descriptor: A descriptor.Descriptor object describing the protobuf.
+  Returns:
+    The Message class object described by the descriptor.
+  """
+  # Original implementation leads to duplicate message classes, which won't play
+  # well with extensions. Message factory info is also missing.
+  # Redirect to message_factory.
+  return message_factory.GetMessageClass(descriptor)

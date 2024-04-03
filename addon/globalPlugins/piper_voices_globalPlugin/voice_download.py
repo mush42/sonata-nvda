@@ -24,11 +24,11 @@ import languageHandler
 from logHandler import log
 
 from . import PiperTextToSpeechSystem, helpers, PIPER_VOICES_DIR
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 with helpers.import_bundled_library():
     import mureq as request
-    from concurrent.futures import ThreadPoolExecutor
-    from pathlib import Path
 
 import addonHandler
 

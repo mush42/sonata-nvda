@@ -29,11 +29,10 @@ from . import aio
 from . import helpers
 from .components import AsyncSnakDialog, ColumnDefn, ImmutableObjectListView, SimpleDialog, make_sized_static_box
 from .sized_controls import SizedPanel
-
+from pathlib import Path
 
 with helpers.import_bundled_library():
     import miniaudio
-    from pathlib import Path
 
 import addonHandler
 
