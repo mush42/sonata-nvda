@@ -1,0 +1,29 @@
+{
+	"addonId": "sonata_neural_voices",
+	"displayName": "Sonata Neural Voices",
+	"URL": "",
+	"description": "Neural voices for NVDA based on Sonata",
+	"sha256": "63e667de02ed7ee4aa63354e66b5b781a1c601de2a62594c9589d4cd5af4a4c6",
+	"homepage": null,
+	"addonVersionName": "3.0-beta",
+	"addonVersionNumber": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"minNVDAVersion": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"lastTestedVersion": {
+		"major": 0,
+		"minor": 0,
+		"patch": 0
+	},
+	"channel": "beta",
+	"publisher": "",
+	"sourceURL": "https://github.com/mush42/sonata-for-nvda",
+	"license": "GPL 2",
+	"licenseURL": null
+}

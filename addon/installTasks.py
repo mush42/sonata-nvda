@@ -46,10 +46,10 @@ def force_kill_piper_grpc_server(psutil):
 def _temporary_import_psutil():
     temp_import_dir = tempfile.TemporaryDirectory()
     src = os.path.join(LIB_DIR, "psutil")
-    py3_lib_src = os.path.join(LIB_DIR, "python3.dll")
+    # py3_lib_src = os.path.join(LIB_DIR, "python3.dll")
     dst = os.path.join(temp_import_dir.name, "psutil")
     shutil.copytree(src, dst)
-    shutil.copy2(py3_lib_src, dst)
+    # shutil.copy2(py3_lib_src, dst)
     sys.path.insert(0, temp_import_dir.name)
     import psutil
     yield psutil
