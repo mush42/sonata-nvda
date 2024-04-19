@@ -89,7 +89,7 @@ class SonataVoice:
             raise ValueError(f"Invalid voice path: {path}")
         return cls(
             key=key,
-            name=name,
+            name=name.replace("+RT", ""),
             language=normalizeLanguage(lang),
             description="",
             location=path,
@@ -170,17 +170,11 @@ class SonataVoice:
 
     @property
     def standard_variant_key(self):
-        return self.key.replace("+RT", "")
+        return SonataTextToSpeechSystem.get_voice_variants(self.key)[0]
 
     @property
     def fast_variant_key(self):
-        key = self.key.replace("+RT", "")
-        lang, name, quality = key.split("-")
-        return "-".join([
-            lang,
-            f"{name}+RT",
-            quality
-        ])
+        return SonataTextToSpeechSystem.get_voice_variants(self.key)[1]
 
     async def synthesize(self, text, rate, volume, pitch, sentence_silence_ms):
         if (len(text) < 10) and (set(text.strip()).issubset(IGNORED_PUNCS)):
@@ -363,6 +357,12 @@ class SonataTextToSpeechSystem:
                 FALLBACK_SPEAKER_NAME,
             ]
 
+    @staticmethod
+    def get_voice_variants(voice_key):
+        std_key = voice_key.replace("+RT", "")
+        lang, name, quality = std_key.split("-")
+        rt_key = f"{lang}-{name}+RT-{quality}"
+        return std_key, rt_key
     def create_speech_provider(self, text):
         return SpeechProvider(text, self.speech_options.copy())
 

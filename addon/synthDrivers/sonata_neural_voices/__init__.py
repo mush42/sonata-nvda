@@ -234,11 +234,7 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self.availableLanguages = {v.language for v in self.voices}
         self._voice_map = {v.key: v for v in self.voices}
         self._standard_voice_map = {v.standard_variant_key: v for v in self.voices}
-        (
-            self.availableVoices,
-            self.__voice_variants,
-            self.__default_variants,
-        ) = self._get_voices_and_variants()
+        self.availableVoices = self._get_valid_voices()
         self.__voice = None
 
     def terminate(self):
@@ -518,11 +514,12 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             del self._availableVariants
         with suppress(AttributeError):
             del self._availableSpeakers
+        self.tts.voice = self._standard_voice_map[value].key
         if value in SonataConfig:
             variant = SonataConfig[value].get("variant", self.variant)
             speaker = SonataConfig[value].get("speaker")
         else:
-            variant = self.__default_variants[value]
+            variant = self._standard_voice_map[value].variant
             speaker = None
         self._set_variant(variant)
 
@@ -543,14 +540,14 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self.tts.language = value
 
     def _get_variant(self):
-        return self._voice_map[self.tts.voice].variant
+        return self.tts.speech_options.voice.variant
 
     def _set_variant(self, value):
         variant = value.lower()
         if variant == "standard":
-            voice_key = self._standard_voice_map[self.__voice].standard_variant_key
+            voice_key = self.tts.speech_options.voice.standard_variant_key
         elif variant == "fast":
-            voice_key = self._standard_voice_map[self.__voice].fast_variant_key
+            voice_key = self.tts.speech_options.voice.fast_variant_key
         else:
             log.info(f"Unknown voice variant: {variant}")
             return
@@ -562,30 +559,26 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         self._player = self._get_or_create_player(voice.sample_rate)
 
     def _getAvailableVariants(self):
+        std_key, rt_key = SonataTextToSpeechSystem.get_voice_variants(self.__voice)
         rv = OrderedDict()
-        for (variant, vinfo) in self.__voice_variants[self.voice].items():
-            rv[variant] = VoiceInfo(variant, variant.title(), vinfo.language)
+        if std_key in self._voice_map:
+            rv["standard"] = VoiceInfo("standard", "Standard", self.language)
+        if rt_key in self._voice_map:
+            rv["fast"] = VoiceInfo("fast", "Fast", self.language)
         return rv
 
     def _get_variant_independent_voice_id(self, voice_key):
-        return voice_key.replace("+RT", "")
+        return SonataTextToSpeechSystem.get_voice_variants(voice_key)[0]
 
-    def _get_voices_and_variants(self):
+    def _get_valid_voices(self):
         all_voices = OrderedDict()
-        all_variants = OrderedDict()
-        default_variants = OrderedDict()
         for voice in self.voices:
             voice_id = self._get_variant_independent_voice_id(voice.key)
             quality = voice.properties["quality"]
             lang = languageHandler.normalizeLanguage(voice.language).replace("_", "-")
             display_name = f"{voice.name} ({lang}) - {quality}"
-            variant = voice.variant
             all_voices[voice_id] = VoiceInfo(voice_id, display_name, voice.language)
-            all_variants.setdefault(voice_id, {})[variant] = VoiceInfo(
-                variant, variant.title(), voice.language
-            )
-            default_variants.setdefault(voice_id, variant)
-        return all_voices, all_variants, default_variants
+        return all_voices
 
     def _get_speaker(self):
         return self.tts.speaker

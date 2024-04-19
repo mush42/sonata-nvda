@@ -174,12 +174,7 @@ class PiperVoice:
     def get_rt_variant_download_url(self):
         if not self.has_rt_variant:
             raise ValueError(f"Voice `{self.key}` has no RT variant")
-        lang, name, quality = self.key.split("-")
-        rt_voice_key = "-".join([
-            lang,
-            f"{name}+RT",
-            quality
-        ])
+        ___, rt_voice_key = SonataTextToSpeechSystem.get_voice_variants(self.key)
         return RT_VOICE_DOWNLOAD_URL_PREFIX + rt_voice_key + ".tar.gz"
 
 
@@ -490,22 +485,12 @@ def get_available_voices(force_online=False):
             installed_voice_keys = {voice.key for voice in installed_voices}
             not_installed = []
             for (key, value) in voices.items():
-                value["standard_variant_installed"] = False
-                value["fast_variant_installed"] = False
-                lang, name, quality = key.split("-")
-                rt_key = "-".join([
-                    lang,
-                    f"{name}+RT",
-                    quality
-                ])
-                if (key not in installed_voice_keys) or (rt_key not in installed_voice_keys):
-                    not_installed.append(value)
-                    continue
-                if key in installed_voice_keys:
-                    value["standard_variant_installed"] = True
-                if rt_key in installed_voice_keys:
-                    value["fast_variant_installed"] = True
+                std_key, rt_key = SonataTextToSpeechSystem.get_voice_variants(key)
+                value["standard_variant_installed"] = std_key in installed_voice_keys
+                value["fast_variant_installed"] = rt_key in installed_voice_keys
                 if value["standard_variant_installed"] and value["fast_variant_installed"]:
+                    continue
+                if value["standard_variant_installed"] and not value["has_rt_variant"]:
                     continue
                 not_installed.append(value)
             voice_objs = PiperVoice.from_list_of_dicts(not_installed)

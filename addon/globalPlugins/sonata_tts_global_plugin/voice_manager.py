@@ -102,10 +102,7 @@ class InstalledSonataVoicesPanel(SizedPanel):
                 synth.__init__()
 
     def _get_installed_voice_name(self, voice):
-        name = voice.name
-        if "+RT" in name:
-            return name.replace("+RT", "") + " (fast)"
-        return name + " (standard)"
+        return f"{voice.name} ({voice.variant})"
 
     def on_model_card(self, event):
         selected = self.voices_list.get_selected()
@@ -328,7 +325,9 @@ class OnlineSonataVoicesPanel(SizedPanel):
         if selected_voice is None:
             return
         self.download_std_btn.Enable(not selected_voice.standard_variant_installed)
-        self.download_rt_btn.Enable(not selected_voice.fast_variant_installed)
+        self.download_rt_btn.Enable(
+            selected_voice.has_rt_variant and not selected_voice.fast_variant_installed
+        )
         if selected_voice.num_speakers > 1:
             self.speaker_choice.Enable(True)
             speakers = list(selected_voice.speaker_id_map.keys())

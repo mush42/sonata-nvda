@@ -84,8 +84,6 @@ async def initialize():
     port = SONATA_GRPC_SERVER_PORT
     CHANNEL = grpc.aio.insecure_channel(f"localhost:{port}")
     SONATA_GRPC_SERVICE = sonata_grpcStub(CHANNEL)
-    retval = await bench()
-    log.info(f"Bench: {retval}")
 
 
 @atexit.register
