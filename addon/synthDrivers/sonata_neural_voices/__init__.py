@@ -531,7 +531,10 @@ class SynthDriver(synthDriverHandler.SynthDriver):
         if speaker is not None:
             self._set_speaker(speaker)
         # Update gui if shown
-        update_displaied_params_on_voice_change(self)
+        try:
+            update_displaied_params_on_voice_change(self)
+        except:
+            log.exception("Failed to update Speech GUI", exc_info=True)
 
     def _get_language(self):
         return self.tts.language
@@ -553,7 +556,9 @@ class SynthDriver(synthDriverHandler.SynthDriver):
             return
         if voice_key not in self._voice_map:
             return
+        prev_speaker = self.tts.speech_options.voice.speaker
         self.tts.voice = voice_key
+        self.tts.speech_options.voice.speaker = prev_speaker
         SonataConfig.setdefault(self.voice, {})["variant"] = value
         voice = self.tts.speech_options.voice
         self._player = self._get_or_create_player(voice.sample_rate)

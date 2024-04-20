@@ -67,5 +67,5 @@ def update_displaied_params_on_voice_change(synth):
     voice_panel.speakerList.SetItems([s.displayName for s in speakers])
     voice_panel.variantList.SetItems([v.displayName for v in variants])
     # Update based on config
-    # voice_panel.updateDriverSettings("speaker")
-    # voice_panel.updateDriverSettings("variant")
+    voice_panel.updateDriverSettings("speaker")
+    voice_panel.updateDriverSettings("variant")

@@ -196,6 +196,7 @@ class SpeechOptions:
     __slots__ = ["voice", "rate", "volume", "pitch", "sentence_silence_ms"]
 
     def __init__(self, voice, speaker=None, rate=None, volume=None, pitch=None, sentence_silence_ms=None):
+        self.voice = None
         self.set_voice(voice)
         self.rate = rate
         self.volume = volume
