@@ -6,7 +6,7 @@ This add-on implements a speech synthesizer driver for NVDA using neural TTS mod
 
 You can listen to Piper's voice samples here: [Piper voice samples](https://rhasspy.github.io/piper-samples/).
 
-This add-on uses [Sonata: A cross-platform Rust engine for neural TTS models](https://github.com/mush42/ssonata) which is being developed by Musharraf Omer.
+This add-on uses [Sonata: A cross-platform Rust engine for neural TTS models](https://github.com/mush42/sonata) which is being developed by Musharraf Omer.
 
 
 # Installation
@@ -25,7 +25,7 @@ You can also open the voice manager from NVDA's main menu.
 
 Note that we recommend choosing the `low` or `medium` quality voices for your target language(s), because they generally provide better responsiveness. For additional responsiveness, you can choose to download the `fast` variant of a voice at a cost of slightly lower speech quality.
 
-You can also install voices from local archives. After obtaining the voice's file, open the voice manager, in the installed tab, click the button labled `Install from local file`. Choose the voice file, wait for the voice to install, and restart NVDA to refresh the voices list.
+You can also install voices from local archives. After obtaining the voice's file, open the voice manager, in the installed tab, click the button labeled `Install from local file`. Choose the voice file, wait for the voice to install, and restart NVDA to refresh the voices list.
 
 ## A note on voice quality
 
