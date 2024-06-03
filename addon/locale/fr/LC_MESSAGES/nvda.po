@@ -8,27 +8,26 @@ msgstr ""
 "Project-Id-Version: 'sonata_neural_voices' '3.0-beta.2'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
 "POT-Creation-Date: 2024-05-16 20:58+0200\n"
-"PO-Revision-Date: 2024-05-17 11:50+0200\n"
+"PO-Revision-Date: 2024-05-17 11:24+0200\n"
 "Last-Translator: Rémy Ruiz <remyruiz@gmail.com>\n"
 "Language-Team: \n"
-"Language: es\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.4.4\n"
-"X-Poedit-Bookmarks: -1,16,-1,-1,-1,-1,-1,-1,-1,-1\n"
 
 #. Translators: label of a menu item
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:47
 msgid "Sonata &voice manager..."
-msgstr "Administrador de voces &Sonata..."
+msgstr "Gestionnaire de &voix Sonata..."
 
 #. Translators: Sonata's voice manager menu item help
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:49
 msgid "Open the voice manager to preview, install or download sonata voices"
 msgstr ""
-"Abrir el administrador de voces para probar, instalar o descargar voces "
-"sonata"
+"Ouvrir le gestionnaire de voix pour un aperçu, installer ou télécharger des "
+"voix sonata"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:65
 msgid ""
@@ -36,9 +35,10 @@ msgid ""
 "You can preview and download voices from the voice manager.\n"
 "Do you want to open the voice manager now?"
 msgstr ""
-"No se encontró una voz Sonata.\n"
-"Puedes probar o descargar voces desde el administrador de voces.\n"
-"¿Quieres abrir el administrador de voces ahora?"
+"Aucune voix de Sonata n'a été trouvée.\n"
+"Vous pouvez avoir un aperçu et télécharger des voix depuis le gestionnaire "
+"de voix.\n"
+"Voulez-vous ouvrir le gestionnaire de voix maintenant ?"
 
 #. Translators: title of a message telling the user that no Sonata voice was found
 #. Add-on summary, usually the user visible name of the addon.
@@ -46,29 +46,29 @@ msgstr ""
 #. to be shown on installation and add-on information found in Add-ons Manager.
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:70 buildVars.py:23
 msgid "Sonata Neural Voices"
-msgstr "Voces Neuronales Sonata"
+msgstr "Voix neuronales de Sonata"
 
 #. Translators: the label of the OK button in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\components.py:86
 msgid "OK"
-msgstr "Aceptar"
+msgstr "OK"
 
 #. Translators: the label of the cancel button in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\components.py:89
 msgid "Cancel"
-msgstr "Cancelar"
+msgstr "Annuler"
 
 #. Translators: message of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:192
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:329
 msgid "Downloaded: {progress}%"
-msgstr "Descargado: {progress}%"
+msgstr "Téléchargée : {progress}%"
 
 #. Translators: message shown in the voice download progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:201
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:338
 msgid "Installing voice"
-msgstr "Instalando voz"
+msgstr "Installation de la voix"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:230
 msgid ""
@@ -76,45 +76,45 @@ msgid ""
 "To use this voice, you need to restart NVDA.\n"
 "Do you want to restart NVDA now?"
 msgstr ""
-"La voz {voice} se ha descargado con éxito.\n"
-"Para usar esta voz, necesitas reiniciar NVDA.\n"
-"¿Quieres reiniciar NVDA ahora?"
+"La voix  {voice} a bien été téléchargée.\n"
+"Pour utiliser cette voix, vous devez redémarrer NVDA.\n"
+"Voulez-vous redémarrer NVDA maintenant ?"
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:237
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:361
 msgid "Voice downloaded"
-msgstr "Voz descargada"
+msgstr "Voix téléchargée"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:246
 msgid ""
 "Cannot download voice {voice}.\n"
 "Please check your connection and try again."
 msgstr ""
-"La voz {voice} no se ha podido descargar.\n"
-"Por favor, verifica tu conexión e inténtalo de nuevo."
+"Impossible de télécharger la voix {voice}.\n"
+"Veuillez vérifier votre connexion et réessayer."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:248
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:372
 msgid "Download failed"
-msgstr "Descarga fallida"
+msgstr "Échec du téléchargement"
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:258
 msgid "Downloading voice {voice}"
-msgstr "Descargando la voz {voice}"
+msgstr "Téléchargement de la voix {voice}"
 
 #. Translators: message of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:262
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:386
 msgid "Retrieving download information..."
-msgstr "Recopilando información de la descarga..."
+msgstr "Récupération des informations du téléchargement..."
 
 #. Translators: message shown in progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:274
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:397
 msgid "Downloading file: {file}"
-msgstr "Descargando archivo: {file}"
+msgstr "Téléchargement du fichier : {file}"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:354
 msgid ""
@@ -122,40 +122,40 @@ msgid ""
 "To use this voice, you need to restart NVDA.\n"
 "Do you want to restart NVDA now?"
 msgstr ""
-"La variante rápida de la voz {voice} se ha descargado con éxito.\n"
-"Para usar esta voz, necesitas reiniciar NVDA.\n"
-"¿Quieres reiniciar NVDA ahora?"
+"La variante rapide de la voix {voice} a bien été téléchargée.\n"
+"Pour utiliser cette voix, vous devez redémarrer NVDA.\n"
+"Voulez-vous redémarrer NVDA maintenant ?"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:370
 msgid ""
 "Cannot download fast variant of the voice {voice}.\n"
 "Please check your connection and try again."
 msgstr ""
-"La variante rápida de la voz {voice} no se ha podido descargar.\n"
-"Por favor, verifica tu conexión e inténtalo de nuevo."
+"Impossible de télécharger la variante rapide de la voix {voice}.\n"
+"Veuillez vérifier votre connexion et réessayer."
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:382
 msgid "Downloading fast variant of the voice {voice}"
-msgstr "Descargando variante rápida de la voz {voice}"
+msgstr "Téléchargement d'une variante rapide de la voix {voice}"
 
 #. Add controls
 #. Translators: label for a list of installed voices
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:42
 msgid "Installed voices"
-msgstr "Voces instaladas"
+msgstr "Voix installées"
 
 #. Translators: list view column title
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:48
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:243
 msgid "Name"
-msgstr "Nombre"
+msgstr "Nom"
 
 #. Translators: list view column title
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:51
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:245
 msgid "Quality"
-msgstr "Calidad"
+msgstr "Qualité"
 
 #. Translators: list view column title
 #. Build controls
@@ -163,22 +163,22 @@ msgstr "Calidad"
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:54
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:238
 msgid "Language"
-msgstr "Idioma"
+msgstr "Langue"
 
 #. Translators: label for a button for showing voice model card
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:60
 msgid "&Voice model card..."
-msgstr "&Tarjeta de modelo de la voz..."
+msgstr "&Fiche du modèle de la voix..."
 
 #. Translators: label for a button for removing a voice
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:62
 msgid "&Remove voice..."
-msgstr "&Eliminar voz..."
+msgstr "&Supprimer la voix..."
 
 #. Translators: the main label of the install button
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:67
 msgid "Install from local file"
-msgstr "Instalar desde un archivo local"
+msgstr "Installer à partir d'un fichier local"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:70
 msgid ""
@@ -186,50 +186,51 @@ msgid ""
 "The archive contains the voice model and configuration.\n"
 "The archive should have a (.tar.gz) file extension."
 msgstr ""
-"Instala una voz desde un archivo local.\n"
-"El archivo contiene el modelo de voz y su configuración.\n"
-"El archivo debe tener una extensión (.tar.gz)."
+"Installer une voix à partir d'une archive locale.\n"
+"L'archive contient le modèle de la voix  et la configuration.\n"
+"L'archive doit avoir une extension de fichier (.tar.gz)."
 
 #. ! Intentionally untranslatable
 #. Translators: title of a message box showing voice model card
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:121
 msgid "Model card"
-msgstr "Targeta de modelo"
+msgstr "Fiche  du modèle"
 
 #. Translators: content of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:127
 msgid "Model card information is unavailable for this voice"
 msgstr ""
-"La información de la tarjeta de modelo no está disponible para esta voz"
+"Les informations sur la fiche du modèle ne sont pas disponibles pour cette "
+"voix"
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:129
 msgid "Not found"
-msgstr "No encontrado"
+msgstr "Non trouvée"
 
 #. Translators: message in a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:146
 msgid "You cannot remove the currently active voice!"
-msgstr "¡No puedes eliminar la voz actualmente en ejecución!"
+msgstr "Vous ne pouvez pas supprimer la voix en cours d'exécution !"
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:148
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:301
 msgid "Error"
-msgstr "Error"
+msgstr "Erreur"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:155
 msgid ""
 "Do you want to remove this voice?\n"
 "Voice: {name}"
 msgstr ""
-"¿Quieres eliminar esta voz?\n"
-"voz: {name}"
+"Voulez-vous supprimer cette voix ?\n"
+"Voix : {name}"
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:159
 msgid "Remove voice?"
-msgstr "¿Eliminar voz?"
+msgstr "Supprimer la voix ?"
 
 #. Translators: message in a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:169
@@ -237,139 +238,139 @@ msgid ""
 "Failed to remove voice.\n"
 "See NVDA's log for more details."
 msgstr ""
-"Se produjo un error al eliminar la voz.\n"
-"Por favor, verifica el registro de NVDA para más detalles."
+"Échec de la suppression de la voix.\n"
+"Voir le journal de NVDA pour plus de détails."
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:171
 msgid "Failed"
-msgstr "Fallido"
+msgstr "Échoué"
 
 #. Translators: message in a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:177
 msgid "Voice removed successfully."
-msgstr "La voz se ha eliminado con éxito."
+msgstr "Voix supprimée avec succès."
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:179
 msgid "Done"
-msgstr "Echo"
+msgstr "Terminé"
 
 #. Translators: title for a dialog for opening a file
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:188
 msgid "Choose voice archive file "
-msgstr "Selecciona el archivo de voz "
+msgstr "Choisissez le fichier d'archive de la voix "
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:213
 msgid "Failed to install voice from archive. See NVDA's log for more details."
 msgstr ""
-"Se produjo un error al instalar la voz desde el archivo. verifica el "
-"registro de NVDA para más detalles."
+"Échec de l'installation de la voix à partir des archives. Voir le journal de "
+"NVDA pour plus de détails."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:215
 msgid "Voice installation failed"
-msgstr "Instalación de voz fallida"
+msgstr "L'installation de la voix a échoué"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:222
 msgid "Voice {voice} has been installed successfully."
-msgstr "La voz {voice} ha sido instalada con éxito."
+msgstr "La voix {voice} a été installé avec succès."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:224
 msgid "Voice installed successfully"
-msgstr "Voz instalada satisfactoriamente"
+msgstr "Voix installée avec succès"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:240
 msgid "Available voices"
-msgstr "Voces disponibles"
+msgstr "Voix disponibles"
 
 #. Translators: header of a group of controls for previewing the voice
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:256
 msgid "Preview"
-msgstr "Probar"
+msgstr "Aperçu"
 
 #. Translators: Label for a setting in synth settings ring.
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:258
 #: addon\synthDrivers\sonata_neural_voices\__init__.py:126
 msgid "Speaker"
-msgstr "Hablante"
+msgstr "Intervenant"
 
 #. Translators: label of a button
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:261
 msgid "&Preview"
-msgstr "&Probar"
+msgstr "&Aperçu"
 
 #. Translators: label of a button to download the standard variant of the voice
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:265
 msgid "&Download standard variant"
-msgstr "&Descarga variante estándar"
+msgstr "&Télécharger la variante standard"
 
 #. Translators: label of a button to download the fast variant of voice
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:267
 msgid "Download &fast variant"
-msgstr "Descarga &variante rápida"
+msgstr "Télécharger une &variante rapide"
 
 #. Translators: label of a button to refresh the voices list
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:269
 msgid "&Refresh voices list"
-msgstr "&Refrescar lista de voces"
+msgstr "&Rafraîchir la liste des voix"
 
 #. Translators: message in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:289
 msgid "Retrieving voices list. Please wait..."
-msgstr "Recopilando lista de voces. Por favor espera..."
+msgstr "Récupération de la liste des voix. Veuillez patienter..."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:300
 msgid ""
 "Could not retrieve voice list.\n"
 "Please check your connection and try again."
 msgstr ""
-"No se ha podido recopilar la lista de voces.\n"
-"Por favor, verifica tu conexión e inténtalo nuevamente."
+"Impossible de récupérer la liste des voix.\n"
+"Veuillez vérifier votre connexion et réessayer."
 
 #. Translators: message in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:352
 msgid "Playing preview..."
-msgstr "Reproduciendo prueba..."
+msgstr "Lecture de l'aperçu..."
 
 #. Translators: title of voice manager dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:411
 msgid "Sonata voice manager"
-msgstr "Administrador de voces Sonata"
+msgstr "Gestionnaire de voix Sonata"
 
 #. Translators: label of a tab in a tab control
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:422
 msgid "Installed"
-msgstr "Instalado"
+msgstr "Installé"
 
 #. Translators: label of a tab in a tab control
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:427
 msgid "Download"
-msgstr "Descargar"
+msgstr "Télécharger"
 
 #. Translators: the label of the close button in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:443
 msgid "&Close"
-msgstr "&Cerrar"
+msgstr "&Fermer"
 
 #. Translators: Label for a setting in voice settings dialog.
 #: addon\synthDrivers\sonata_neural_voices\__init__.py:123
 msgid "&Speaker"
-msgstr "&Hablante"
+msgstr "&Intervenant"
 
 #: addon\synthDrivers\sonata_neural_voices\__init__.py:168
 msgid "&Noise scale"
-msgstr "&Escala de ruido"
+msgstr "&Échelle de bruit"
 
 #: addon\synthDrivers\sonata_neural_voices\__init__.py:169
 msgid "&Length scale"
-msgstr "&Escala de duración"
+msgstr "Échelle de &durée"
 
 #: addon\synthDrivers\sonata_neural_voices\__init__.py:170
 msgid "Noise &w"
-msgstr "Ruido de &anchura"
+msgstr "Ha&uteur de bruit"
 
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 #: buildVars.py:26
 msgid "Neural voices for NVDA based on Sonata"
-msgstr "Voces neuronales para NVDA basado en Sonata"
+msgstr "Voix neuronales pour NVDA basées sur Sonata"
