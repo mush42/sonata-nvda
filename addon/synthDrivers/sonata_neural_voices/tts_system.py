@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Union
 
 import globalVars
-from languageHandler import normalizeLanguage
+from languageHandler import normalizeLanguage, stripLocaleFromLangCode
 
 from . import aio
 from . import grpc_client
@@ -296,17 +296,16 @@ class SonataTextToSpeechSystem:
         lang = normalizeLanguage(new_language)
         if self.speech_options.voice.language == lang:
             return
-        lang_code = lang.split("-")[0] + "-"
+        lang_code = stripLocaleFromLangCode(lang.replace("_", "-")).lower()
         possible_voices = []
         for voice in self.voices:
             if voice.language == lang:
                 self.speech_options.set_voice(voice)
                 return
-            elif voice.language.startswith(lang_code):
-                possible_voices.append(voice)
-        if possible_voices:
-            self.speech_options.set_voice(possible_voices[0])
-            return
+            voice_lang_code = stripLocaleFromLangCode(voice.language.replace("_", "-")).lower()
+            if voice_lang_code == lang_code:
+                self.speech_options.set_voice(voice)
+                return
         raise VoiceNotFoundError(
             f"A voice with the given language `{new_language}` was not found"
         )
