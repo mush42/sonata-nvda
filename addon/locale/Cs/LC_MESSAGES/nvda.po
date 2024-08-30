@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 'piper_neural_voices' '2.0-beta'\n"
+"Project-Id-Version: 'sonata_neural_voices' '3.0'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
 "POT-Creation-Date: 2024-04-21 09:45-0500\n"
 "PO-Revision-Date: 2024-08-04 16:06+0200\n"
@@ -373,7 +373,7 @@ msgstr "Š&um a w"
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 #: buildVars.py:26
 msgid "Neural voices for NVDA based on Sonata"
-msgstr "Systém hlasů trénovaných na neurónových sítích založený na syntézách Piper a jiných."
+msgstr "Systém hlasů trénovaných na neurónových sítích založený na syntézách Sonata a jiných"
 
 #~ msgid "&Download voice"
 #~ msgstr "&Stáhnout hlas"
