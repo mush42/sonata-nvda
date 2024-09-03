@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 'sonata_neural_voices' '3.0'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
 "POT-Creation-Date: 2024-04-21 09:45-0500\n"
-"PO-Revision-Date: 2024-08-04 16:06+0200\n"
+"PO-Revision-Date: 2024-09-03 06:30+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs_CZ\n"
@@ -59,7 +59,6 @@ msgstr "Storno"
 #. Translators: message of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:192
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:329
-#, python-brace-format
 msgid "Downloaded: {progress}%"
 msgstr "Staženo: {progress}%"
 
@@ -70,7 +69,6 @@ msgid "Installing voice"
 msgstr "Instalace hlasu"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:230
-#, python-brace-format
 msgid ""
 "Successfully downloaded voice  {voice}.\n"
 "To use this voice, you need to restart NVDA.\n"
@@ -87,11 +85,12 @@ msgid "Voice downloaded"
 msgstr "Hlas stažen"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:246
-#, python-brace-format
 msgid ""
 "Cannot download voice {voice}.\n"
 "Please check your connection and try again."
-msgstr "Nemůžu stáhnout hlas {voice} Zkontrolujte internetové připojení."
+msgstr ""
+"Nemůžu stáhnout hlas {voice}\n"
+"Zkontrolujte internetové připojení."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:248
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:372
@@ -100,7 +99,6 @@ msgstr "Stahování selhalo."
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:258
-#, python-brace-format
 msgid "Downloading voice {voice}"
 msgstr "Stahuji hlas {voice}"
 
@@ -113,12 +111,10 @@ msgstr "Získávám informace o hlasech."
 #. Translators: message shown in progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:274
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:397
-#, python-brace-format
 msgid "Downloading file: {file}"
 msgstr "Stahuji soubor {file}"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:354
-#, python-brace-format
 msgid ""
 "Successfully downloaded fast variant of the voice  {voice}.\n"
 "To use this voice, you need to restart NVDA.\n"
@@ -129,15 +125,13 @@ msgstr ""
 "¿Chcete ho restartovat nyní?"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:370
-#, python-brace-format
 msgid ""
 "Cannot download fast variant of the voice {voice}.\n"
 "Please check your connection and try again."
-msgstr "Nemůžu stáhnout rychlou variantu hlasu hlasu {voice} Zkontrolujte internetové připojení."
+msgstr "Nemůžu stáhnout rychlou variantu hlasu hlasu {voice}\nZkontrolujte internetové připojení."
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:382
-#, python-brace-format
 msgid "Downloading fast variant of the voice {voice}"
 msgstr "Stahuji rychlou variantu hlasu {voice}"
 
@@ -220,7 +214,6 @@ msgid "Error"
 msgstr "Chyba"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:155
-#, python-brace-format
 msgid ""
 "Do you want to remove this voice?\n"
 "Voice: {name}"
@@ -271,7 +264,6 @@ msgid "Voice installation failed"
 msgstr "Instalace hlasu selhala."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:222
-#, python-brace-format
 msgid "Voice {voice} has been installed successfully."
 msgstr "Hlas {voice} Byl úspěšně nainstalován."
 
@@ -374,6 +366,3 @@ msgstr "Š&um a w"
 #: buildVars.py:26
 msgid "Neural voices for NVDA based on Sonata"
 msgstr "Systém hlasů trénovaných na neurónových sítích založený na syntézách Sonata a jiných"
-
-#~ msgid "&Download voice"
-#~ msgstr "&Stáhnout hlas"
