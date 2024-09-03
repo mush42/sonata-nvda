@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 'sonata_neural_voices' '3.0'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
 "POT-Creation-Date: 2024-04-21 09:45-0500\n"
-"PO-Revision-Date: 2024-09-03 06:30+0200\n"
+"PO-Revision-Date: 2024-09-03 05:16-0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs_CZ\n"
@@ -21,12 +21,12 @@ msgstr ""
 #. Translators: label of a menu item
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:47
 msgid "Sonata &voice manager..."
-msgstr "Správce Sonaty hlasů"
+msgstr "Správce Sonaty &hlasů..."
 
 #. Translators: Sonata's voice manager menu item help
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:49
 msgid "Open the voice manager to preview, install or download sonata voices"
-msgstr "Otevře správce hlasů Sonata, kde je možné stáhnout a nainstalovat hlasy."
+msgstr "Otevře správce hlasů Sonata, kde je možné stáhnout a nainstalovat hlasy"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:65
 msgid ""
@@ -95,7 +95,7 @@ msgstr ""
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:248
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:372
 msgid "Download failed"
-msgstr "Stahování selhalo."
+msgstr "Stahování selhalo"
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:258
@@ -128,7 +128,9 @@ msgstr ""
 msgid ""
 "Cannot download fast variant of the voice {voice}.\n"
 "Please check your connection and try again."
-msgstr "Nemůžu stáhnout rychlou variantu hlasu hlasu {voice}\nZkontrolujte internetové připojení."
+msgstr ""
+"Nemůžu stáhnout rychlou variantu hlasu hlasu {voice}\n"
+"Zkontrolujte internetové připojení."
 
 #. Translators: title of a progress dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:382
@@ -151,7 +153,7 @@ msgstr "Jméno"
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:51
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:245
 msgid "Quality"
-msgstr "Kvalita:"
+msgstr "Kvalita"
 
 #. Translators: list view column title
 #. Build controls
@@ -164,7 +166,7 @@ msgstr "Jazyk"
 #. Translators: label for a button for showing voice model card
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:60
 msgid "&Voice model card..."
-msgstr "O &modelu hlasu"
+msgstr "O &modelu hlasu..."
 
 #. Translators: label for a button for removing a voice
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:62
@@ -190,12 +192,12 @@ msgstr ""
 #. Translators: title of a message box showing voice model card
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:121
 msgid "Model card"
-msgstr "Soubor card modelu."
+msgstr "Soubor card modelu"
 
 #. Translators: content of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:127
 msgid "Model card information is unavailable for this voice"
-msgstr "Informace o modelu k tomuto hlasu nejsou dostupné."
+msgstr "Informace o modelu k tomuto hlasu nejsou dostupné"
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:129
@@ -233,12 +235,12 @@ msgid ""
 "See NVDA's log for more details."
 msgstr ""
 "Chyba při odebírání hlasu.\n"
-"Podívejte se na detaily v logu NVDA"
+"Podívejte se na detaily v logu NVDA."
 
 #. Translators: title of a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:171
 msgid "Failed"
-msgstr "Selhalo."
+msgstr "Selhalo"
 
 #. Translators: message in a message box
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:177
@@ -253,7 +255,7 @@ msgstr "Hotovo"
 #. Translators: title for a dialog for opening a file
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:188
 msgid "Choose voice archive file "
-msgstr "Vyberte Archiv s hlasem."
+msgstr "Vyberte Archiv s hlasem "
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:213
 msgid "Failed to install voice from archive. See NVDA's log for more details."
@@ -261,7 +263,7 @@ msgstr "Selhala instalace hlasu ze souboru. Podívejte se do logu NVDA."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:215
 msgid "Voice installation failed"
-msgstr "Instalace hlasu selhala."
+msgstr "Instalace hlasu selhala"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:222
 msgid "Voice {voice} has been installed successfully."
@@ -269,7 +271,7 @@ msgstr "Hlas {voice} Byl úspěšně nainstalován."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:224
 msgid "Voice installed successfully"
-msgstr "Hlas byl úspěšně nainstalován."
+msgstr "Hlas byl úspěšně nainstalován"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:240
 msgid "Available voices"
@@ -309,7 +311,7 @@ msgstr "&Obnovit seznam hlasů."
 #. Translators: message in a dialog
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:289
 msgid "Retrieving voices list. Please wait..."
-msgstr "Získávám seznam hlasů, prosím čekejte"
+msgstr "Získávám seznam hlasů, prosím čekejte."
 
 #: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:300
 msgid ""
