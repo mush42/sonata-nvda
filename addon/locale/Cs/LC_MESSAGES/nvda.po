@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'sonata_neural_voices' '3.0'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2024-04-21 09:45-0500\n"
+"POT-Creation-Date: 2024-09-03 05:25-0500\n"
 "PO-Revision-Date: 2024-09-03 05:16-0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -26,7 +26,8 @@ msgstr "Správce Sonaty &hlasů..."
 #. Translators: Sonata's voice manager menu item help
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:49
 msgid "Open the voice manager to preview, install or download sonata voices"
-msgstr "Otevře správce hlasů Sonata, kde je možné stáhnout a nainstalovat hlasy"
+msgstr ""
+"Otevře správce hlasů Sonata, kde je možné stáhnout a nainstalovat hlasy"
 
 #: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:65
 msgid ""
@@ -367,4 +368,6 @@ msgstr "Š&um a w"
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 #: buildVars.py:26
 msgid "Neural voices for NVDA based on Sonata"
-msgstr "Systém hlasů trénovaných na neurónových sítích pro NVDA založený na syntézách Sonata a jiných"
+msgstr ""
+"Systém hlasů trénovaných na neurónových sítích pro NVDA založený na "
+"syntézách Sonata a jiných"
