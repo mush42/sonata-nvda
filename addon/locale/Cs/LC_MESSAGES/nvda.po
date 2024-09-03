@@ -367,4 +367,4 @@ msgstr "Š&um a w"
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 #: buildVars.py:26
 msgid "Neural voices for NVDA based on Sonata"
-msgstr "Systém hlasů trénovaných na neurónových sítích založený na syntézách Sonata a jiných"
+msgstr "Systém hlasů trénovaných na neurónových sítích pro NVDA založený na syntézách Sonata a jiných"
