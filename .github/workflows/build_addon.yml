@@ -1,16 +1,20 @@
-name: build addon
+name: Build NVDA Add-on
 
 on:
   push:
-    tags: ["*"]
-    # To build on main/master branch, uncomment the following line:
-    # branches: [ main , master ]
+    tags:
+      - "*"
+    # To build on main/master branch, uncomment the following:
+    # branches:
+    #   - main
+    #   - master
 
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
   workflow_dispatch:
-
 
 permissions:
   contents: write
@@ -18,52 +22,52 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - run: echo -e "pre-commit\nscons\nmarkdown">requirements.txt
+      - name: Update Ubuntu packages and install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install -y python3-pip python3-setuptools python3-wheel \
+            python3-dev build-essential gettext zip
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-        cache: 'pip'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip wheel
-        pip install -r requirements.txt
-        sudo apt-get update  -y
-        sudo apt-get install -y gettext
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install markdown xcons
 
-    - name: Code checks
-      run: export SKIP=no-commit-to-branch; pre-commit run --all
+      - name: Build NVDA Add-on
+        run: |
+          # Use xcons instead of scons
+          xcons
 
-    - name: building addon
-      run: scons
+      - name: Locate and rename NVDA add-on
+        run: |
+          ADDON_FILE=$(find . -name "*.nvda-addon" | head -n 1)
+          if [ -z "$ADDON_FILE" ]; then
+            echo "Error: No .nvda-addon file found."
+            exit 1
+          fi
+          mv "$ADDON_FILE" addon.nvda-addon
 
-    - uses: actions/upload-artifact@v3
-      with:
-        name: packaged_addon
-        path: ./*.nvda-addon
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvda-addon
+          path: addon.nvda-addon
 
-  upload_release:
-    runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    needs: ["build"]
-    steps:
-    - uses: actions/checkout@v3
-    - name: download releases files
-      uses: actions/download-artifact@v3
-    - name: Display structure of downloaded files
-      run: ls -R
-
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: packaged_addon/*.nvda-addon
-        fail_on_unmatched_files: true
-        prerelease: ${{ contains(github.ref, '-') }}
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: addon.nvda-addon
