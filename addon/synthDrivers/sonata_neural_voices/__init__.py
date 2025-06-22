@@ -131,8 +131,7 @@ def create_wave_player(sample_rate):
         channels=1,
         samplesPerSec=sample_rate,
         bitsPerSample=16,
-        outputDevice=config.conf["speech"]["outputDevice"],
-        buffered=True,
+        outputDevice=config.conf["audio"]["outputDevice"],
     )
 
 
