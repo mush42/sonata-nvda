@@ -428,8 +428,8 @@ class ClientCallDetails(abc.ABC):
         the service-side of the RPC.
       credentials: An optional CallCredentials for the RPC.
       wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-      compression: An element of grpc.compression, e.g.
-        grpc.compression.Gzip.
+      compression: An element of grpc.Compression, e.g.
+        grpc.Compression.Gzip.
     """
 
 
@@ -697,8 +697,8 @@ class UnaryUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
           The response value for the RPC.
@@ -731,8 +731,8 @@ class UnaryUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
           The response value for the RPC and a Call value for the RPC.
@@ -765,8 +765,8 @@ class UnaryUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
             An object that is both a Call for the RPC and a Future.
@@ -802,8 +802,8 @@ class UnaryStreamMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
             An object that is a Call for the RPC, an iterator of response
@@ -839,8 +839,8 @@ class StreamUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
           The response value for the RPC.
@@ -874,8 +874,8 @@ class StreamUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
           The response value for the RPC and a Call object for the RPC.
@@ -908,8 +908,8 @@ class StreamUnaryMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
             An object that is both a Call for the RPC and a Future.
@@ -945,8 +945,8 @@ class StreamStreamMultiCallable(abc.ABC):
           credentials: An optional CallCredentials for the RPC. Only valid for
             secure Channel.
           wait_for_ready: An optional flag to enable :term:`wait_for_ready` mechanism.
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
 
         Returns:
             An object that is a Call for the RPC, an iterator of response
@@ -1004,6 +1004,7 @@ class Channel(abc.ABC):
         method,
         request_serializer=None,
         response_deserializer=None,
+        _registered_method=False,
     ):
         """Creates a UnaryUnaryMultiCallable for a unary-unary method.
 
@@ -1014,6 +1015,8 @@ class Channel(abc.ABC):
           response_deserializer: Optional :term:`deserializer` for deserializing the
             response message. Response goes undeserialized in case None
             is passed.
+          _registered_method: Implementation Private. A bool representing whether the method
+            is registered.
 
         Returns:
           A UnaryUnaryMultiCallable value for the named unary-unary method.
@@ -1026,6 +1029,7 @@ class Channel(abc.ABC):
         method,
         request_serializer=None,
         response_deserializer=None,
+        _registered_method=False,
     ):
         """Creates a UnaryStreamMultiCallable for a unary-stream method.
 
@@ -1036,6 +1040,8 @@ class Channel(abc.ABC):
           response_deserializer: Optional :term:`deserializer` for deserializing the
             response message. Response goes undeserialized in case None is
             passed.
+          _registered_method: Implementation Private. A bool representing whether the method
+            is registered.
 
         Returns:
           A UnaryStreamMultiCallable value for the name unary-stream method.
@@ -1048,6 +1054,7 @@ class Channel(abc.ABC):
         method,
         request_serializer=None,
         response_deserializer=None,
+        _registered_method=False,
     ):
         """Creates a StreamUnaryMultiCallable for a stream-unary method.
 
@@ -1058,6 +1065,8 @@ class Channel(abc.ABC):
           response_deserializer: Optional :term:`deserializer` for deserializing the
             response message. Response goes undeserialized in case None is
             passed.
+          _registered_method: Implementation Private. A bool representing whether the method
+            is registered.
 
         Returns:
           A StreamUnaryMultiCallable value for the named stream-unary method.
@@ -1070,6 +1079,7 @@ class Channel(abc.ABC):
         method,
         request_serializer=None,
         response_deserializer=None,
+        _registered_method=False,
     ):
         """Creates a StreamStreamMultiCallable for a stream-stream method.
 
@@ -1080,6 +1090,8 @@ class Channel(abc.ABC):
           response_deserializer: Optional :term:`deserializer` for deserializing the
             response message. Response goes undeserialized in case None
             is passed.
+          _registered_method: Implementation Private. A bool representing whether the method
+            is registered.
 
         Returns:
           A StreamStreamMultiCallable value for the named stream-stream method.
@@ -1170,8 +1182,8 @@ class ServicerContext(RpcContext, metaclass=abc.ABCMeta):
         """Set the compression algorithm to be used for the entire call.
 
         Args:
-          compression: An element of grpc.compression, e.g.
-            grpc.compression.Gzip.
+          compression: An element of grpc.Compression, e.g.
+            grpc.Compression.Gzip.
         """
         raise NotImplementedError()
 
@@ -1219,7 +1231,7 @@ class ServicerContext(RpcContext, metaclass=abc.ABCMeta):
     def abort(self, code, details):
         """Raises an exception to terminate the RPC with a non-OK status.
 
-        The code and details passed as arguments will supercede any existing
+        The code and details passed as arguments will supersede any existing
         ones.
 
         Args:
@@ -1238,7 +1250,7 @@ class ServicerContext(RpcContext, metaclass=abc.ABCMeta):
     def abort_with_status(self, status):
         """Raises an exception to terminate the RPC with a non-OK status.
 
-        The status passed as argument will supercede any existing status code,
+        The status passed as argument will supersede any existing status code,
         status message and trailing metadata.
 
         This is an EXPERIMENTAL API.
@@ -1442,6 +1454,22 @@ class Server(abc.ABC):
         """
         raise NotImplementedError()
 
+    def add_registered_method_handlers(  # noqa: B027
+        self, service_name, method_handlers
+    ):
+        """Registers GenericRpcHandlers with this Server.
+
+        This method is only safe to call before the server is started.
+
+        If the same method have both generic and registered handler,
+        registered handler will take precedence.
+
+        Args:
+          service_name: The service name.
+          method_handlers: A dictionary that maps method names to corresponding
+            RpcMethodHandler.
+        """
+
     @abc.abstractmethod
     def add_insecure_port(self, address):
         """Opens an insecure port for accepting RPCs.
@@ -1488,8 +1516,9 @@ class Server(abc.ABC):
 
         This method immediately stop service of new RPCs in all cases.
 
-        If a grace period is specified, this method returns immediately
-        and all RPCs active at the end of the grace period are aborted.
+        If a grace period is specified, this method waits until all active
+        RPCs are finished or until the grace period is reached. RPCs that haven't
+        been terminated within the grace period are aborted.
         If a grace period is not specified (by passing None for `grace`),
         all existing RPCs are aborted immediately and this method
         blocks until the last RPC handler terminates.
@@ -1811,25 +1840,23 @@ def ssl_server_credentials(
       object is an argument to add_secure_port() method during server setup.
     """
     if not private_key_certificate_chain_pairs:
-        raise ValueError(
+        error_msg = (
             "At least one private key-certificate chain pair is required!"
         )
-    elif require_client_auth and root_certificates is None:
-        raise ValueError(
-            "Illegal to require client auth without providing root"
-            " certificates!"
+        raise ValueError(error_msg)
+    if require_client_auth and root_certificates is None:
+        error_msg = "Illegal to require client auth without providing root certificates!"
+        raise ValueError(error_msg)
+    return ServerCredentials(
+        _cygrpc.server_credentials_ssl(
+            root_certificates,
+            [
+                _cygrpc.SslPemKeyCertPair(key, pem)
+                for key, pem in private_key_certificate_chain_pairs
+            ],
+            require_client_auth,
         )
-    else:
-        return ServerCredentials(
-            _cygrpc.server_credentials_ssl(
-                root_certificates,
-                [
-                    _cygrpc.SslPemKeyCertPair(key, pem)
-                    for key, pem in private_key_certificate_chain_pairs
-                ],
-                require_client_auth,
-            )
-        )
+    )
 
 
 def xds_server_credentials(fallback_credentials):
@@ -1882,10 +1909,8 @@ def ssl_server_certificate_configuration(
                 ],
             )
         )
-    else:
-        raise ValueError(
-            "At least one private key-certificate chain pair is required!"
-        )
+    error_msg = "At least one private key-certificate chain pair is required!"
+    raise ValueError(error_msg)
 
 
 def dynamic_ssl_server_credentials(
@@ -2011,6 +2036,7 @@ def alts_channel_credentials(service_accounts=None):
         peer identity of the server, handshake will fail. The arg can be empty
         if the client does not have any information about trusted server
         identity.
+
     Returns:
       A ChannelCredentials for use with an ALTS-enabled Channel
     """
@@ -2177,8 +2203,8 @@ def server(
       maximum_concurrent_rpcs: The maximum number of concurrent RPCs this server
         will service before returning RESOURCE_EXHAUSTED status, or None to
         indicate no limit.
-      compression: An element of grpc.compression, e.g.
-        grpc.compression.Gzip. This compression algorithm will be used for the
+      compression: An element of grpc.Compression, e.g.
+        grpc.Compression.Gzip. This compression algorithm will be used for the
         lifetime of the server unless overridden.
       xds: If set to true, retrieves server configuration via xDS. This is an
         EXPERIMENTAL option.
@@ -2226,70 +2252,70 @@ class Compression(enum.IntEnum):
 ###################################  __all__  #################################
 
 __all__ = (
-    "FutureTimeoutError",
-    "FutureCancelledError",
-    "Future",
-    "ChannelConnectivity",
-    "StatusCode",
-    "Status",
-    "RpcError",
-    "RpcContext",
-    "Call",
-    "ChannelCredentials",
-    "CallCredentials",
     "AuthMetadataContext",
-    "AuthMetadataPluginCallback",
     "AuthMetadataPlugin",
-    "Compression",
+    "AuthMetadataPluginCallback",
+    "Call",
+    "CallCredentials",
+    "Channel",
+    "ChannelConnectivity",
+    "ChannelCredentials",
     "ClientCallDetails",
+    "Compression",
+    "Future",
+    "FutureCancelledError",
+    "FutureTimeoutError",
+    "GenericRpcHandler",
+    "HandlerCallDetails",
+    "LocalConnectionType",
+    "RpcContext",
+    "RpcError",
+    "RpcMethodHandler",
+    "Server",
     "ServerCertificateConfiguration",
     "ServerCredentials",
-    "LocalConnectionType",
-    "UnaryUnaryMultiCallable",
-    "UnaryStreamMultiCallable",
-    "StreamUnaryMultiCallable",
-    "StreamStreamMultiCallable",
-    "UnaryUnaryClientInterceptor",
-    "UnaryStreamClientInterceptor",
-    "StreamUnaryClientInterceptor",
-    "StreamStreamClientInterceptor",
-    "Channel",
-    "ServicerContext",
-    "RpcMethodHandler",
-    "HandlerCallDetails",
-    "GenericRpcHandler",
-    "ServiceRpcHandler",
-    "Server",
     "ServerInterceptor",
-    "unary_unary_rpc_method_handler",
-    "unary_stream_rpc_method_handler",
-    "stream_unary_rpc_method_handler",
-    "stream_stream_rpc_method_handler",
-    "method_handlers_generic_handler",
-    "ssl_channel_credentials",
-    "metadata_call_credentials",
+    "ServiceRpcHandler",
+    "ServicerContext",
+    "Status",
+    "StatusCode",
+    "StreamStreamClientInterceptor",
+    "StreamStreamMultiCallable",
+    "StreamUnaryClientInterceptor",
+    "StreamUnaryMultiCallable",
+    "UnaryStreamClientInterceptor",
+    "UnaryStreamMultiCallable",
+    "UnaryUnaryClientInterceptor",
+    "UnaryUnaryMultiCallable",
     "access_token_call_credentials",
+    "alts_channel_credentials",
+    "alts_server_credentials",
+    "channel_ready_future",
     "composite_call_credentials",
     "composite_channel_credentials",
     "compute_engine_channel_credentials",
+    "dynamic_ssl_server_credentials",
+    "insecure_channel",
+    "insecure_server_credentials",
+    "intercept_channel",
     "local_channel_credentials",
     "local_server_credentials",
-    "alts_channel_credentials",
-    "alts_server_credentials",
-    "ssl_server_credentials",
-    "ssl_server_certificate_configuration",
-    "dynamic_ssl_server_credentials",
-    "channel_ready_future",
-    "insecure_channel",
-    "secure_channel",
-    "intercept_channel",
-    "server",
+    "metadata_call_credentials",
+    "method_handlers_generic_handler",
     "protos",
-    "services",
     "protos_and_services",
+    "secure_channel",
+    "server",
+    "services",
+    "ssl_channel_credentials",
+    "ssl_server_certificate_configuration",
+    "ssl_server_credentials",
+    "stream_stream_rpc_method_handler",
+    "stream_unary_rpc_method_handler",
+    "unary_stream_rpc_method_handler",
+    "unary_unary_rpc_method_handler",
     "xds_channel_credentials",
     "xds_server_credentials",
-    "insecure_server_credentials",
 )
 
 ############################### Extension Shims ################################

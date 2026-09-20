@@ -118,7 +118,7 @@ class SonataVoice:
         )
         self.sample_rate = voice_info.audio.sample_rate
         self.speakers = voice_info.speakers
-        self.speaker_names = list(self.speakers.values())
+        self.speaker_names = sorted(self.speakers.values())
         self.is_multi_speaker = bool(self.speakers)
         if self.is_multi_speaker:
             self.default_speaker = default_synth_options.speaker

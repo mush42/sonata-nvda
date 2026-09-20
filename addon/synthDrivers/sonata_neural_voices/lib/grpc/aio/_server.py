@@ -14,7 +14,7 @@
 """Server-side implementation of gRPC Asyncio Python."""
 
 from concurrent.futures import Executor
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import grpc
 from grpc import _common
@@ -53,10 +53,13 @@ class Server(_base_server.Server):
                 if not isinstance(interceptor, ServerInterceptor)
             ]
             if invalid_interceptors:
-                raise ValueError(
-                    "Interceptor must be ServerInterceptor, the "
-                    f"following are invalid: {invalid_interceptors}"
+                error_msg = (
+                    "Interceptor must be ServerInterceptor,"
+                    "the following are invalid: {invalid_interceptors}"
                 )
+                # TODO(asheshvidyut): fix the value error below
+                # not caught by ruff.
+                raise ValueError(error_msg)
         self._server = cygrpc.AioServer(
             self._loop,
             thread_pool,
@@ -78,6 +81,14 @@ class Server(_base_server.Server):
           used to service RPCs.
         """
         self._server.add_generic_rpc_handlers(generic_rpc_handlers)
+
+    def add_registered_method_handlers(
+        self,
+        service_name: str,
+        method_handlers: Dict[str, grpc.RpcMethodHandler],
+    ) -> None:
+        # TODO(xuanwn): Implement this for AsyncIO.
+        pass
 
     def add_insecure_port(self, address: str) -> int:
         """Opens an insecure port for accepting RPCs.
@@ -131,11 +142,12 @@ class Server(_base_server.Server):
         This method immediately stops the server from servicing new RPCs in
         all cases.
 
-        If a grace period is specified, this method returns immediately and all
-        RPCs active at the end of the grace period are aborted. If a grace
-        period is not specified (by passing None for grace), all existing RPCs
-        are aborted immediately and this method blocks until the last RPC
-        handler terminates.
+        If a grace period is specified, this method waits until all active
+        RPCs are finished or until the grace period is reached. RPCs that haven't
+        been terminated within the grace period are aborted.
+        If a grace period is not specified (by passing None for grace), all
+        existing RPCs are aborted immediately and this method blocks until
+        the last RPC handler terminates.
 
         This method is idempotent and may be called at any time. Passing a
         smaller grace value in a subsequent call will have the effect of
@@ -180,12 +192,11 @@ class Server(_base_server.Server):
         The Cython AioServer doesn't hold a ref-count to this class. It should
         be safe to slightly extend the underlying Cython object's life span.
         """
-        if hasattr(self, "_server"):
-            if self._server.is_running():
-                cygrpc.schedule_coro_threadsafe(
-                    self._server.shutdown(None),
-                    self._loop,
-                )
+        if hasattr(self, "_server") and self._server.is_running():
+            cygrpc.schedule_coro_threadsafe(
+                self._server.shutdown(None),
+                self._loop,
+            )
 
 
 def server(
@@ -213,8 +224,8 @@ def server(
       maximum_concurrent_rpcs: The maximum number of concurrent RPCs this server
         will service before returning RESOURCE_EXHAUSTED status, or None to
         indicate no limit.
-      compression: An element of grpc.compression, e.g.
-        grpc.compression.Gzip. This compression algorithm will be used for the
+      compression: An element of grpc.Compression, e.g.
+        grpc.Compression.Gzip. This compression algorithm will be used for the
         lifetime of the server unless overridden by set_compression.
 
     Returns:

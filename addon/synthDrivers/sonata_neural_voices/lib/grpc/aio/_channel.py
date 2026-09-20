@@ -89,8 +89,8 @@ class _BaseMultiCallable:
     _loop: asyncio.AbstractEventLoop
     _channel: cygrpc.AioChannel
     _method: bytes
-    _request_serializer: SerializingFunction
-    _response_deserializer: DeserializingFunction
+    _request_serializer: Optional[SerializingFunction]
+    _response_deserializer: Optional[DeserializingFunction]
     _interceptors: Optional[Sequence[ClientInterceptor]]
     _references: List[Any]
     _loop: asyncio.AbstractEventLoop
@@ -100,8 +100,8 @@ class _BaseMultiCallable:
         self,
         channel: cygrpc.AioChannel,
         method: bytes,
-        request_serializer: SerializingFunction,
-        response_deserializer: DeserializingFunction,
+        request_serializer: Optional[SerializingFunction],
+        response_deserializer: Optional[DeserializingFunction],
         interceptors: Optional[Sequence[ClientInterceptor]],
         references: List[Any],
         loop: asyncio.AbstractEventLoop,
@@ -123,8 +123,10 @@ class _BaseMultiCallable:
         metadata, as it should be used for the current call.
         """
         metadata = metadata or Metadata()
-        if not isinstance(metadata, Metadata) and isinstance(metadata, tuple):
-            metadata = Metadata.from_tuple(metadata)
+        if not isinstance(metadata, Metadata) and isinstance(
+            metadata, Sequence
+        ):
+            metadata = Metadata.from_tuple(tuple(metadata))
         if compression:
             metadata = Metadata(
                 *_compression.augment_metadata(metadata, compression)
@@ -325,7 +327,7 @@ class Channel(_base_channel.Channel):
         self,
         target: str,
         options: ChannelArgumentType,
-        credentials: Optional[grpc.ChannelCredentials],
+        credentials: Optional[cygrpc.ChannelCredentials],
         compression: Optional[grpc.Compression],
         interceptors: Optional[Sequence[ClientInterceptor]],
     ):
@@ -356,7 +358,7 @@ class Channel(_base_channel.Channel):
                 elif isinstance(interceptor, StreamStreamClientInterceptor):
                     self._stream_stream_interceptors.append(interceptor)
                 else:
-                    raise ValueError(
+                    raise ValueError(  # noqa: TRY004
                         "Interceptor {} must be ".format(interceptor)
                         + "{} or ".format(UnaryUnaryClientInterceptor.__name__)
                         + "{} or ".format(UnaryStreamClientInterceptor.__name__)
@@ -406,11 +408,10 @@ class Channel(_base_channel.Channel):
                 # the failure. It is fixed by https://github.com/python/cpython/pull/18669,
                 # but not available until 3.9 or 3.8.3. So, we have to keep it
                 # for a while.
-                # TODO(lidiz) drop this hack after 3.8 deprecation
+                # TODO(lidiz): drop this hack after 3.8 deprecation
                 if "frame" in str(attribute_error):
                     continue
-                else:
-                    raise
+                raise
 
             # If the Task is created by a C-extension, the stack will be empty.
             if not stack:
@@ -419,24 +420,25 @@ class Channel(_base_channel.Channel):
             # Locate ones created by `aio.Call`.
             frame = stack[0]
             candidate = frame.f_locals.get("self")
-            if candidate:
-                if isinstance(candidate, _base_call.Call):
-                    if hasattr(candidate, "_channel"):
-                        # For intercepted Call object
-                        if candidate._channel is not self._channel:
-                            continue
-                    elif hasattr(candidate, "_cython_call"):
-                        # For normal Call object
-                        if candidate._cython_call._channel is not self._channel:
-                            continue
-                    else:
-                        # Unidentified Call object
-                        raise cygrpc.InternalError(
-                            f"Unrecognized call object: {candidate}"
-                        )
+            # Explicitly check for a non-null candidate instead of the more pythonic 'if candidate:'
+            # because doing 'if candidate:' assumes that the coroutine implements '__bool__' which
+            # might not always be the case.
+            if candidate is not None and isinstance(candidate, _base_call.Call):
+                if hasattr(candidate, "_channel"):
+                    # For intercepted Call object
+                    if candidate._channel is not self._channel:
+                        continue
+                elif hasattr(candidate, "_cython_call"):
+                    # For normal Call object
+                    if candidate._cython_call._channel is not self._channel:
+                        continue
+                else:
+                    # Unidentified Call object
+                    error_msg = f"Unrecognized call object: {candidate}"
+                    raise cygrpc.InternalError(error_msg)
 
-                    calls.append(candidate)
-                    call_tasks.append(task)
+                calls.append(candidate)
+                call_tasks.append(task)
 
         # If needed, try to wait for them to finish.
         # Call objects are not always awaitables.
@@ -454,9 +456,8 @@ class Channel(_base_channel.Channel):
         await self._close(grace)
 
     def __del__(self):
-        if hasattr(self, "_channel"):
-            if not self._channel.closed():
-                self._channel.close()
+        if hasattr(self, "_channel") and not self._channel.closed():
+            self._channel.close()
 
     def get_state(
         self, try_to_connect: bool = False
@@ -478,11 +479,20 @@ class Channel(_base_channel.Channel):
             await self.wait_for_state_change(state)
             state = self.get_state(try_to_connect=True)
 
+    # TODO(xuanwn): Implement this method after we have
+    # observability for Asyncio.
+    def _get_registered_call_handle(self, method: str) -> int:
+        pass
+
+    # TODO(xuanwn): Implement _registered_method after we have
+    # observability for Asyncio.
+    # pylint: disable=arguments-differ,unused-argument
     def unary_unary(
         self,
         method: str,
         request_serializer: Optional[SerializingFunction] = None,
         response_deserializer: Optional[DeserializingFunction] = None,
+        _registered_method: Optional[bool] = False,
     ) -> UnaryUnaryMultiCallable:
         return UnaryUnaryMultiCallable(
             self._channel,
@@ -494,11 +504,15 @@ class Channel(_base_channel.Channel):
             self._loop,
         )
 
+    # TODO(xuanwn): Implement _registered_method after we have
+    # observability for Asyncio.
+    # pylint: disable=arguments-differ,unused-argument
     def unary_stream(
         self,
         method: str,
         request_serializer: Optional[SerializingFunction] = None,
         response_deserializer: Optional[DeserializingFunction] = None,
+        _registered_method: Optional[bool] = False,
     ) -> UnaryStreamMultiCallable:
         return UnaryStreamMultiCallable(
             self._channel,
@@ -510,11 +524,15 @@ class Channel(_base_channel.Channel):
             self._loop,
         )
 
+    # TODO(xuanwn): Implement _registered_method after we have
+    # observability for Asyncio.
+    # pylint: disable=arguments-differ,unused-argument
     def stream_unary(
         self,
         method: str,
         request_serializer: Optional[SerializingFunction] = None,
         response_deserializer: Optional[DeserializingFunction] = None,
+        _registered_method: Optional[bool] = False,
     ) -> StreamUnaryMultiCallable:
         return StreamUnaryMultiCallable(
             self._channel,
@@ -526,11 +544,15 @@ class Channel(_base_channel.Channel):
             self._loop,
         )
 
+    # TODO(xuanwn): Implement _registered_method after we have
+    # observability for Asyncio.
+    # pylint: disable=arguments-differ,unused-argument
     def stream_stream(
         self,
         method: str,
         request_serializer: Optional[SerializingFunction] = None,
         response_deserializer: Optional[DeserializingFunction] = None,
+        _registered_method: Optional[bool] = False,
     ) -> StreamStreamMultiCallable:
         return StreamStreamMultiCallable(
             self._channel,

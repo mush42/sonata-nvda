@@ -12,6 +12,7 @@ import os
 import shutil
 import tempfile
 import threading
+import urllib.request
 import winsound
 
 import wx
@@ -30,6 +31,7 @@ from .sized_controls import SizedPanel
 
 with helpers.import_bundled_library():
     import miniaudio
+    import mureq as request
     from pathlib import Path
 
 
@@ -300,6 +302,7 @@ class OnlineSonataVoicesPanel(SizedPanel):
                 _("Could not retrieve voice list.\nPlease check your connection and try again."),
                 _("Error"),
                 style=wx.ICON_ERROR,
+                parent=gui.mainFrame,
             )
             return
         wx.CallAfter(self.set_voices, result)
@@ -353,7 +356,8 @@ class OnlineSonataVoicesPanel(SizedPanel):
             executor=aio.THREADED_EXECUTOR,
             func=functools.partial(play_remote_mp3, mp3url),
             done_callback=lambda future: True,
-            parent=self.GetTopLevelParent()
+            parent=self.GetTopLevelParent(),
+            dismiss_callback=lambda: (winsound.PlaySound(None, winsound.SND_PURGE), True)[1]
         )
 
     def on_download(self, event):
@@ -402,6 +406,117 @@ class OnlineSonataVoicesPanel(SizedPanel):
         self.__already_populated.set()
 
 
+class URLInstallPanel(SizedPanel):
+    """Panel that lets the user install a Piper voice from a HuggingFace / direct URL."""
+
+    def __init__(self, parent):
+        super().__init__(parent, -1)
+        self.SetSizerType("vertical")
+
+        wx.StaticText(
+            self, -1,
+            # Translators: description label for URL install panel
+            _(
+                "Paste a direct download URL for a Piper voice archive (.tar.gz).\n"
+                "Supported: HuggingFace resolve links, direct HTTPS links."
+            ),
+        )
+        self.url_ctrl = wx.TextCtrl(self, -1, "")
+        self.url_ctrl.SetSizerProps(expand=True)
+
+        self.install_btn = wx.Button(
+            self, -1,
+            # Translators: button label for URL install
+            _("&Install from URL"),
+        )
+        self.status_label = wx.StaticText(self, -1, "")
+
+        self.Bind(wx.EVT_BUTTON, self._on_install, self.install_btn)
+
+    def populate_list(self):
+        pass  # Nothing to populate
+
+    def invalidate_cache(self):
+        pass
+
+    def _on_install(self, event):
+        url = self.url_ctrl.GetValue().strip()
+        if not url:
+            gui.messageBox(
+                # Translators: error message when URL is empty
+                _("Please enter a URL."),
+                _("Error"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+        if not (url.startswith("http://") or url.startswith("https://")):
+            gui.messageBox(
+                # Translators: error message for invalid URL
+                _("Please enter a valid http or https URL."),
+                _("Error"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+            return
+
+        self.install_btn.Disable()
+        # Translators: status label during download
+        self.status_label.SetLabel(_("Downloading…"))
+
+        def _do_download():
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    filename = url.split("/")[-1].split("?")[0] or "voice.tar.gz"
+                    dest = os.path.join(tmpdir, filename)
+                    # Download with progress
+                    def _reporthook(block_num, block_size, total_size):
+                        if total_size > 0:
+                            pct = min(100, int(block_num * block_size * 100 / total_size))
+                            wx.CallAfter(
+                                self.status_label.SetLabel,
+                                # Translators: download progress
+                                _("Downloading… {pct}%").format(pct=pct),
+                            )
+
+                    urllib.request.urlretrieve(url, dest, reporthook=_reporthook)
+                    wx.CallAfter(
+                        self.status_label.SetLabel,
+                        # Translators: installing status
+                        _("Installing…"),
+                    )
+                    voice_download.install_voice_from_tar_archive(dest)
+                wx.CallAfter(self._install_done, True, "")
+            except Exception as exc:
+                log.exception("URL voice install failed", exc_info=True)
+                wx.CallAfter(self._install_done, False, str(exc))
+
+        threading.Thread(target=_do_download, daemon=True).start()
+
+    def _install_done(self, success, error_msg):
+        self.install_btn.Enable()
+        if success:
+            self.status_label.SetLabel("")
+            gui.messageBox(
+                # Translators: success message after URL install
+                _("Voice installed successfully from URL."),
+                # Translators: title
+                _("Done"),
+                wx.OK | wx.ICON_INFORMATION,
+                self,
+            )
+        else:
+            self.status_label.SetLabel("")
+            gui.messageBox(
+                # Translators: failure message
+                _("Failed to install voice.\n{error}").format(error=error_msg),
+                # Translators: title
+                _("Error"),
+                wx.OK | wx.ICON_ERROR,
+                self,
+            )
+
+
 class SonataVoiceManagerDialog(SimpleDialog):
 
     def __init__(self):
@@ -426,6 +541,11 @@ class SonataVoiceManagerDialog(SimpleDialog):
                 # Translators: label of a tab in a tab control
                 _("Download"),
                 OnlineSonataVoicesPanel(self.notebookCtrl),
+            ),
+            (
+                # Translators: label of a tab for URL-based install
+                _("Install from URL"),
+                URLInstallPanel(self.notebookCtrl),
             ),
         ]
         for label, panel in panel_info:

@@ -79,10 +79,11 @@ def _create_channel(
     channel_credentials: Optional[grpc.ChannelCredentials],
     compression: Optional[grpc.Compression],
 ) -> grpc.Channel:
-    _LOGGER.debug(
+    debug_msg = (
         f"Creating secure channel with credentials '{channel_credentials}', "
-        + f"options '{options}' and compression '{compression}'"
+        f"options '{options}' and compression '{compression}'"
     )
+    _LOGGER.debug(debug_msg)
     return grpc.secure_channel(
         target,
         credentials=channel_credentials,
@@ -143,14 +144,13 @@ class ChannelCache:
                     if eviction_time <= now:
                         ChannelCache._singleton._evict_locked(key)
                         continue
-                    else:
-                        time_to_eviction = (eviction_time - now).total_seconds()
-                        # NOTE: We aim to *eventually* coalesce to a state in
-                        # which no overdue channels are in the cache and the
-                        # length of the cache is longer than _MAXIMUM_CHANNELS.
-                        # We tolerate momentary states in which these two
-                        # criteria are not met.
-                        ChannelCache._condition.wait(timeout=time_to_eviction)
+                    time_to_eviction = (eviction_time - now).total_seconds()
+                    # NOTE: We aim to *eventually* coalesce to a state in
+                    # which no overdue channels are in the cache and the
+                    # length of the cache is longer than _MAXIMUM_CHANNELS.
+                    # We tolerate momentary states in which these two
+                    # criteria are not met.
+                    ChannelCache._condition.wait(timeout=time_to_eviction)
 
     def get_channel(
         self,
@@ -159,7 +159,19 @@ class ChannelCache:
         channel_credentials: Optional[grpc.ChannelCredentials],
         insecure: bool,
         compression: Optional[grpc.Compression],
-    ) -> grpc.Channel:
+        method: str,
+        _registered_method: bool,
+    ) -> Tuple[grpc.Channel, Optional[int]]:
+        """Get a channel from cache or creates a new channel.
+
+        This method also takes care of register method for channel,
+          which means we'll register a new call handle if we're calling a
+          non-registered method for an existing channel.
+
+        Returns:
+            A tuple with two items. The first item is the channel, second item is
+              the call handle if the method is registered, None if it's not registered.
+        """
         if insecure and channel_credentials:
             raise ValueError(
                 "The insecure option is mutually exclusive with "
@@ -176,28 +188,34 @@ class ChannelCache:
         key = (target, options, channel_credentials, compression)
         with self._lock:
             channel_data = self._mapping.get(key, None)
+            call_handle = None
             if channel_data is not None:
                 channel = channel_data[0]
+                # Register a new call handle if we're calling a registered method for an
+                # existing channel and this method is not registered.
+                if _registered_method:
+                    call_handle = channel._get_registered_call_handle(method)
                 self._mapping.pop(key)
                 self._mapping[key] = (
                     channel,
                     datetime.datetime.now() + _EVICTION_PERIOD,
                 )
-                return channel
-            else:
-                channel = _create_channel(
-                    target, options, channel_credentials, compression
-                )
-                self._mapping[key] = (
-                    channel,
-                    datetime.datetime.now() + _EVICTION_PERIOD,
-                )
-                if (
-                    len(self._mapping) == 1
-                    or len(self._mapping) >= _MAXIMUM_CHANNELS
-                ):
-                    self._condition.notify()
-                return channel
+                return channel, call_handle
+            channel = _create_channel(
+                target, options, channel_credentials, compression
+            )
+            if _registered_method:
+                call_handle = channel._get_registered_call_handle(method)
+            self._mapping[key] = (
+                channel,
+                datetime.datetime.now() + _EVICTION_PERIOD,
+            )
+            if (
+                len(self._mapping) == 1
+                or len(self._mapping) >= _MAXIMUM_CHANNELS
+            ):
+                self._condition.notify()
+            return channel, call_handle
 
     def _test_only_channel_count(self) -> int:
         with self._lock:
@@ -205,6 +223,7 @@ class ChannelCache:
 
 
 @experimental_api
+# pylint: disable=too-many-locals
 def unary_unary(
     request: RequestType,
     target: str,
@@ -219,6 +238,7 @@ def unary_unary(
     wait_for_ready: Optional[bool] = None,
     timeout: Optional[float] = _DEFAULT_TIMEOUT,
     metadata: Optional[Sequence[Tuple[str, Union[str, bytes]]]] = None,
+    _registered_method: Optional[bool] = False,
 ) -> ResponseType:
     """Invokes a unary-unary RPC without an explicitly specified channel.
 
@@ -272,11 +292,17 @@ def unary_unary(
     Returns:
       The response to the RPC.
     """
-    channel = ChannelCache.get().get_channel(
-        target, options, channel_credentials, insecure, compression
+    channel, method_handle = ChannelCache.get().get_channel(
+        target,
+        options,
+        channel_credentials,
+        insecure,
+        compression,
+        method,
+        _registered_method,
     )
     multicallable = channel.unary_unary(
-        method, request_serializer, response_deserializer
+        method, request_serializer, response_deserializer, method_handle
     )
     wait_for_ready = wait_for_ready if wait_for_ready is not None else True
     return multicallable(
@@ -289,6 +315,7 @@ def unary_unary(
 
 
 @experimental_api
+# pylint: disable=too-many-locals
 def unary_stream(
     request: RequestType,
     target: str,
@@ -303,6 +330,7 @@ def unary_stream(
     wait_for_ready: Optional[bool] = None,
     timeout: Optional[float] = _DEFAULT_TIMEOUT,
     metadata: Optional[Sequence[Tuple[str, Union[str, bytes]]]] = None,
+    _registered_method: Optional[bool] = False,
 ) -> Iterator[ResponseType]:
     """Invokes a unary-stream RPC without an explicitly specified channel.
 
@@ -355,11 +383,17 @@ def unary_stream(
     Returns:
       An iterator of responses.
     """
-    channel = ChannelCache.get().get_channel(
-        target, options, channel_credentials, insecure, compression
+    channel, method_handle = ChannelCache.get().get_channel(
+        target,
+        options,
+        channel_credentials,
+        insecure,
+        compression,
+        method,
+        _registered_method,
     )
     multicallable = channel.unary_stream(
-        method, request_serializer, response_deserializer
+        method, request_serializer, response_deserializer, method_handle
     )
     wait_for_ready = wait_for_ready if wait_for_ready is not None else True
     return multicallable(
@@ -372,6 +406,7 @@ def unary_stream(
 
 
 @experimental_api
+# pylint: disable=too-many-locals
 def stream_unary(
     request_iterator: Iterator[RequestType],
     target: str,
@@ -386,6 +421,7 @@ def stream_unary(
     wait_for_ready: Optional[bool] = None,
     timeout: Optional[float] = _DEFAULT_TIMEOUT,
     metadata: Optional[Sequence[Tuple[str, Union[str, bytes]]]] = None,
+    _registered_method: Optional[bool] = False,
 ) -> ResponseType:
     """Invokes a stream-unary RPC without an explicitly specified channel.
 
@@ -438,11 +474,17 @@ def stream_unary(
     Returns:
       The response to the RPC.
     """
-    channel = ChannelCache.get().get_channel(
-        target, options, channel_credentials, insecure, compression
+    channel, method_handle = ChannelCache.get().get_channel(
+        target,
+        options,
+        channel_credentials,
+        insecure,
+        compression,
+        method,
+        _registered_method,
     )
     multicallable = channel.stream_unary(
-        method, request_serializer, response_deserializer
+        method, request_serializer, response_deserializer, method_handle
     )
     wait_for_ready = wait_for_ready if wait_for_ready is not None else True
     return multicallable(
@@ -455,6 +497,7 @@ def stream_unary(
 
 
 @experimental_api
+# pylint: disable=too-many-locals
 def stream_stream(
     request_iterator: Iterator[RequestType],
     target: str,
@@ -469,6 +512,7 @@ def stream_stream(
     wait_for_ready: Optional[bool] = None,
     timeout: Optional[float] = _DEFAULT_TIMEOUT,
     metadata: Optional[Sequence[Tuple[str, Union[str, bytes]]]] = None,
+    _registered_method: Optional[bool] = False,
 ) -> Iterator[ResponseType]:
     """Invokes a stream-stream RPC without an explicitly specified channel.
 
@@ -521,11 +565,17 @@ def stream_stream(
     Returns:
       An iterator of responses.
     """
-    channel = ChannelCache.get().get_channel(
-        target, options, channel_credentials, insecure, compression
+    channel, method_handle = ChannelCache.get().get_channel(
+        target,
+        options,
+        channel_credentials,
+        insecure,
+        compression,
+        method,
+        _registered_method,
     )
     multicallable = channel.stream_stream(
-        method, request_serializer, response_deserializer
+        method, request_serializer, response_deserializer, method_handle
     )
     wait_for_ready = wait_for_ready if wait_for_ready is not None else True
     return multicallable(

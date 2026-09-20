@@ -12,15 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the metadata abstraction for gRPC Asyncio Python."""
+from __future__ import annotations
+
 from collections import OrderedDict
-from collections import abc
-from typing import Any, Iterator, List, Tuple, Union
+from collections.abc import Collection
+from collections.abc import ItemsView
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import KeysView
+from collections.abc import Sequence
+from collections.abc import ValuesView
+from typing import Any, List, Optional, Tuple, Union
+
+from typing_extensions import Self
 
 MetadataKey = str
 MetadataValue = Union[str, bytes]
+MetadatumType = Tuple[MetadataKey, MetadataValue]
+MetadataType = Union["Metadata", Sequence[MetadatumType]]
 
 
-class Metadata(abc.Mapping):
+class Metadata(Collection):  # noqa: PLW1641
     """Metadata abstraction for the asynchronous calls and interceptors.
 
     The metadata is a mapping from str -> List[str]
@@ -33,13 +45,30 @@ class Metadata(abc.Mapping):
         * Allows partial mutation on the data without recreating the new object from scratch.
     """
 
-    def __init__(self, *args: Tuple[MetadataKey, MetadataValue]) -> None:
+    def __init__(self, *args: MetadatumType) -> None:
         self._metadata = OrderedDict()
         for md_key, md_value in args:
             self.add(md_key, md_value)
 
     @classmethod
     def from_tuple(cls, raw_metadata: tuple):
+        # Note: We unintentionally support non-tuple arguments here. We plan
+        # to emit a DeprecationWarning when a non-tuple type is used.
+        if raw_metadata:
+            return cls(*raw_metadata)
+        return cls()
+
+    @classmethod
+    def _create(
+        cls,
+        raw_metadata: Union[None, Self, Iterable[MetadatumType]],
+    ) -> Self:
+        # TODO(asheshvidyut): Make this method public and encourage people to use it instead
+        # of `from_tuple` to create metadata from non-tuple types.
+        if raw_metadata is None:
+            return Metadata()
+        if isinstance(raw_metadata, cls):
+            return raw_metadata
         if raw_metadata:
             return cls(*raw_metadata)
         return cls()
@@ -61,7 +90,8 @@ class Metadata(abc.Mapping):
         try:
             return self._metadata[key][0]
         except (ValueError, IndexError) as e:
-            raise KeyError("{0!r}".format(key)) from e
+            error_msg = f"{key!r}"
+            raise KeyError(error_msg) from e
 
     def __setitem__(self, key: MetadataKey, value: MetadataValue) -> None:
         """Calling metadata[<key>] = <value>
@@ -89,6 +119,23 @@ class Metadata(abc.Mapping):
             for value in values:
                 yield (key, value)
 
+    def keys(self) -> KeysView:
+        return KeysView(self._metadata)
+
+    def values(self) -> ValuesView:
+        return ValuesView(self._metadata)
+
+    def items(self) -> ItemsView:
+        return ItemsView(self._metadata)
+
+    def get(
+        self, key: MetadataKey, default: Optional[MetadataValue] = None
+    ) -> Optional[MetadataValue]:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
     def get_all(self, key: MetadataKey) -> List[MetadataValue]:
         """For compatibility with other Metadata abstraction objects (like in Java),
         this would return all items under the desired <key>.
@@ -101,7 +148,7 @@ class Metadata(abc.Mapping):
     def __contains__(self, key: MetadataKey) -> bool:
         return key in self._metadata
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
             return self._metadata == other._metadata
         if isinstance(other, tuple):

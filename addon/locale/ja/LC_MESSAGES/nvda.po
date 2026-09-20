@@ -1,0 +1,474 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the 'piper_neural_voices' package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 'sonata_neural_voices' '3.0-beta.2'\n"
+"Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
+"POT-Creation-Date: 2024-05-16 20:58+0200\n"
+"PO-Revision-Date: 2024-05-17 11:50+0200\n"
+"Last-Translator: Rémy Ruiz <remyruiz@gmail.com>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
+"X-Poedit-Bookmarks: -1,16,-1,-1,-1,-1,-1,-1,-1,-1\n"
+
+#. Translators: label of a menu item
+#: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:47
+msgid "Sonata &voice manager..."
+msgstr "Sonata 音声マネージャー(&V)..."
+
+#. Translators: Sonata's voice manager menu item help
+#: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:49
+msgid "Open the voice manager to preview, install or download sonata voices"
+msgstr "Sonata 音声マネージャーを開いて、音声のプレビュー、インストール、ダウンロードを行います"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:65
+msgid ""
+"No Sonata voice was found.\n"
+"You can preview and download voices from the voice manager.\n"
+"Do you want to open the voice manager now?"
+msgstr ""
+"Sonata の音声が見つかりませんでした。\n"
+"音声マネージャーから音声のプレビューとダウンロードが可能です。\n"
+"今すぐ音声マネージャーを開きますか？"
+
+#. Translators: title of a message telling the user that no Sonata voice was
+#. found
+#. Add-on summary, usually the user visible name of the addon.
+#. Translators: Summary for this add-on
+#. to be shown on installation and add-on information found in Add-ons
+#. Manager.
+#: addon\globalPlugins\sonata_tts_global_plugin\__init__.py:70 buildVars.py:23
+msgid "Sonata Neural Voices"
+msgstr "Sonata Neural Voices"
+
+#. Translators: the label of the OK button in a dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\components.py:86
+msgid "OK"
+msgstr "OK"
+
+#. Translators: the label of the cancel button in a dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\components.py:89
+msgid "Cancel"
+msgstr "キャンセル"
+
+#. Translators: message of a progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:192
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:329
+msgid "Downloaded: {progress}%"
+msgstr "ダウンロード済み: {progress}%"
+
+#. Translators: message shown in the voice download progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:201
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:338
+msgid "Installing voice"
+msgstr "音声をインストール中"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:230
+msgid ""
+"Successfully downloaded voice  {voice}.\n"
+"To use this voice, you need to restart NVDA.\n"
+"Do you want to restart NVDA now?"
+msgstr ""
+"音声 {voice} のダウンロードに成功しました。\n"
+"この音声を使用するにはNVDAを再起動する必要があります。\n"
+"今すぐ再起動しますか？"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:237
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:361
+msgid "Voice downloaded"
+msgstr "音声のダウンロード完了"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:246
+msgid ""
+"Cannot download voice {voice}.\n"
+"Please check your connection and try again."
+msgstr ""
+"音声 {voice} をダウンロードできませんでした。\n"
+"インターネット接続を確認して再試行してください。"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:248
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:372
+msgid "Download failed"
+msgstr "ダウンロード失敗"
+
+#. Translators: title of a progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:258
+msgid "Downloading voice {voice}"
+msgstr "音声 {voice} をダウンロード中"
+
+#. Translators: message of a progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:262
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:386
+msgid "Retrieving download information..."
+msgstr "ダウンロード情報を取得中..."
+
+#. Translators: message shown in progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:274
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:397
+msgid "Downloading file: {file}"
+msgstr "ファイルをダウンロード中: {file}"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:354
+msgid ""
+"Successfully downloaded fast variant of the voice  {voice}.\n"
+"To use this voice, you need to restart NVDA.\n"
+"Do you want to restart NVDA now?"
+msgstr ""
+"音声 {voice} の軽量（Fast）バリアントのダウンロードに成功しました。\n"
+"この音声を使用するにはNVDAを再起動する必要があります。\n"
+"今すぐ再起動しますか？"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:370
+msgid ""
+"Cannot download fast variant of the voice {voice}.\n"
+"Please check your connection and try again."
+msgstr ""
+"音声 {voice} の軽量（Fast）バリアントをダウンロードできませんでした。\n"
+"インターネット接続を確認して再試行してください。"
+
+#. Translators: title of a progress dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_download.py:382
+msgid "Downloading fast variant of the voice {voice}"
+msgstr "音声 {voice} の軽量（Fast）バリアントをダウンロード中"
+
+#. Add controls
+#. Translators: label for a list of installed voices
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:42
+msgid "Installed voices"
+msgstr "インストール済みの音声"
+
+#. Translators: list view column title
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:48
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:243
+msgid "Name"
+msgstr "名前"
+
+#. Translators: list view column title
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:51
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:245
+msgid "Quality"
+msgstr "品質"
+
+#. Translators: list view column title
+#. Build controls
+#. Translators: label of a choice
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:54
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:238
+msgid "Language"
+msgstr "言語"
+
+#. Translators: label for a button for showing voice model card
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:60
+msgid "&Voice model card..."
+msgstr "音声のモデルカード(&V)..."
+
+#. Translators: label for a button for removing a voice
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:62
+msgid "&Remove voice..."
+msgstr "音声を削除(&R)..."
+
+#. Translators: the main label of the install button
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:67
+msgid "Install from local file"
+msgstr "ローカルファイルからインストール"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:70
+msgid ""
+"Install a voice from a local archive.\n"
+"The archive contains the voice model and configuration.\n"
+"The archive should have a (.tar.gz) file extension."
+msgstr ""
+"ローカルのアーカイブファイルから音声をインストールします。\n"
+"アーカイブには音声モデルと設定が含まれている必要があります。\n"
+"拡張子は (.tar.gz) である必要があります。"
+
+#. ! Intentionally untranslatable
+#. Translators: title of a message box showing voice model card
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:121
+msgid "Model card"
+msgstr "モデルカード"
+
+#. Translators: content of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:127
+msgid "Model card information is unavailable for this voice"
+msgstr "この音声のモデルカード情報は利用できません"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:129
+msgid "Not found"
+msgstr "見つかりませんでした"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:146
+msgid "You cannot remove the currently active voice!"
+msgstr "現在使用中の音声は削除できません！"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:148
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:301
+msgid "Error"
+msgstr "エラー"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:155
+msgid ""
+"Do you want to remove this voice?\n"
+"Voice: {name}"
+msgstr ""
+"この音声を削除してもよろしいですか？\n"
+"音声: {name}"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:159
+msgid "Remove voice?"
+msgstr "音声を削除しますか？"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:169
+msgid ""
+"Failed to remove voice.\n"
+"See NVDA's log for more details."
+msgstr ""
+"音声の削除に失敗しました。\n"
+"詳細は NVDA のログを確認してください。"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:171
+msgid "Failed"
+msgstr "失敗"
+
+#. Translators: message in a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:177
+msgid "Voice removed successfully."
+msgstr "音声は正常に削除されました。"
+
+#. Translators: title of a message box
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:179
+msgid "Done"
+msgstr "完了"
+
+#. Translators: title for a dialog for opening a file
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:188
+msgid "Choose voice archive file "
+msgstr "音声のアーカイブファイルを選択してください "
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:213
+msgid "Failed to install voice from archive. See NVDA's log for more details."
+msgstr "アーカイブからの音声インストールに失敗しました。詳細は NVDA のログを確認してください。"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:215
+msgid "Voice installation failed"
+msgstr "音声のインストールに失敗しました"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:222
+msgid "Voice {voice} has been installed successfully."
+msgstr "音声 {voice} が正常にインストールされました。"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:224
+msgid "Voice installed successfully"
+msgstr "音声のインストール完了"
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:240
+msgid "Available voices"
+msgstr "ダウンロード可能な音声"
+
+#. Translators: header of a group of controls for previewing the voice
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:256
+msgid "Preview"
+msgstr "プレビュー"
+
+#. Translators: Label for a setting in synth settings ring.
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:258
+#: addon\synthDrivers\sonata_neural_voices\__init__.py:126
+msgid "Speaker"
+msgstr "話者"
+
+#. Translators: label of a button
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:261
+msgid "&Preview"
+msgstr "プレビュー(&P)"
+
+#. Translators: label of a button to download the standard variant of the
+#. voice
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:265
+msgid "&Download standard variant"
+msgstr "標準バリアントをダウンロード(&D)"
+
+#. Translators: label of a button to download the fast variant of voice
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:267
+msgid "Download &fast variant"
+msgstr "軽量（Fast）バリアントをダウンロード(&F)"
+
+#. Translators: label of a button to refresh the voices list
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:269
+msgid "&Refresh voices list"
+msgstr "音声リストを更新(&R)"
+
+#. Translators: message in a dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:289
+msgid "Retrieving voices list. Please wait..."
+msgstr "音声リストを取得しています。お待ちください..."
+
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:300
+msgid ""
+"Could not retrieve voice list.\n"
+"Please check your connection and try again."
+msgstr ""
+"音声リストを取得できませんでした。\n"
+"インターネット接続を確認して再試行してください。"
+
+#. Translators: message in a dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:352
+msgid "Playing preview..."
+msgstr "プレビューを再生中..."
+
+#. Translators: title of voice manager dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:411
+msgid "Sonata voice manager"
+msgstr "Sonata 音声マネージャー"
+
+#. Translators: label of a tab in a tab control
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:422
+msgid "Installed"
+msgstr "インストール済み"
+
+#. Translators: label of a tab in a tab control
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:427
+msgid "Download"
+msgstr "ダウンロード"
+
+#. Translators: the label of the close button in a dialog
+#: addon\globalPlugins\sonata_tts_global_plugin\voice_manager.py:443
+msgid "&Close"
+msgstr "閉じる(&C)"
+
+#. Translators: Label for a setting in voice settings dialog.
+#: addon\synthDrivers\sonata_neural_voices\__init__.py:123
+msgid "&Speaker"
+msgstr "話者(&S)"
+
+#: addon\synthDrivers\sonata_neural_voices\__init__.py:168
+msgid "&Noise scale"
+msgstr "ノイズスケール(&N)"
+
+#: addon\synthDrivers\sonata_neural_voices\__init__.py:169
+msgid "&Length scale"
+msgstr "長さスケール(&L)"
+
+#: addon\synthDrivers\sonata_neural_voices\__init__.py:170
+msgid "Noise &w"
+msgstr "ノイズ幅(&W)"
+
+#. Add-on description
+#. Translators: Long description to be shown for this add-on on add-on
+#. information from add-ons manager
+#: buildVars.py:26
+msgid "Neural voices for NVDA based on Sonata"
+msgstr "SonataベースのNVDA向けニューラル音声"
+
+# Feature 3: Normalize audio
+msgid "&Normalize audio volume"
+msgstr "音量を自動ノーマライズする(&N)"
+
+# Feature 5: Spatial audio
+msgid "&Spatial audio (stereo panning)"
+msgstr "空間オーディオ（ステレオパンニング）(&S)"
+
+# Feature 8: Structural reading
+msgid "Alternate &speaker for brackets and quotes"
+msgstr "括弧や引用符の中身を別の話者で読む(&S)"
+
+# Feature 4: Night mode script
+msgid "Toggles Sonata night mode (soft, quiet audio)"
+msgstr "Sonataのナイトモード（ソフトで静かな音声）を切り替えます"
+
+# Feature 6: App profiles menu
+msgid "Sonata app &profiles..."
+msgstr "Sonataアプリプロファイル(&P)..."
+
+msgid "Configure per-application Sonata voice profiles"
+msgstr "アプリケーションごとのSonata音声プロファイルを設定します"
+
+# Profile dialog strings
+msgid "Edit App Profile"
+msgstr "アプリプロファイルを編集"
+
+msgid "Application name (e.g. firefox):"
+msgstr "アプリケーション名（例: firefox）:"
+
+msgid "Voice:"
+msgstr "音声:"
+
+msgid "Rate (0-100, blank=default):"
+msgstr "速度（0〜100、空白=デフォルト）:"
+
+msgid "Volume (0-100, blank=default):"
+msgstr "音量（0〜100、空白=デフォルト）:"
+
+msgid "Pitch (0-100, blank=default):"
+msgstr "ピッチ（0〜100、空白=デフォルト）:"
+
+msgid "Please enter an application name."
+msgstr "アプリケーション名を入力してください。"
+
+msgid "Sonata App Profiles"
+msgstr "Sonata アプリプロファイル"
+
+msgid "Configure per-application voice settings.\nSonata will automatically switch to the saved profile\nwhen the specified application gains focus."
+msgstr "アプリケーションごとの音声設定を行います。\n指定したアプリケーションにフォーカスが移ると、\nSonataが自動的に保存されたプロファイルに切り替えます。"
+
+msgid "Application"
+msgstr "アプリケーション"
+
+msgid "&Add..."
+msgstr "追加(&A)..."
+
+msgid "&Edit..."
+msgstr "編集(&E)..."
+
+msgid "&Delete"
+msgstr "削除(&D)"
+
+msgid "Delete profile for '{app}'?"
+msgstr "'{app}' のプロファイルを削除しますか？"
+
+msgid "Confirm"
+msgstr "確認"
+
+# URL install panel strings
+msgid "Paste a direct download URL for a Piper voice archive (.tar.gz).\nSupported: HuggingFace resolve links, direct HTTPS links."
+msgstr "Piper音声アーカイブ（.tar.gz）の直接ダウンロードURLを貼り付けてください。\n対応: HuggingFaceのresolveリンク、直接HTTPSリンク。"
+
+msgid "&Install from URL"
+msgstr "URLからインストール(&I)"
+
+msgid "Please enter a URL."
+msgstr "URLを入力してください。"
+
+msgid "Please enter a valid http or https URL."
+msgstr "有効なhttp/httpsのURLを入力してください。"
+
+msgid "Downloading…"
+msgstr "ダウンロード中…"
+
+msgid "Downloading… {pct}%"
+msgstr "ダウンロード中… {pct}%"
+
+msgid "Installing…"
+msgstr "インストール中…"
+
+msgid "Voice installed successfully from URL."
+msgstr "URLから音声を正常にインストールしました。"
+
+msgid "Failed to install voice.\n{error}"
+msgstr "音声のインストールに失敗しました。\n{error}"
+
+msgid "Install from URL"
+msgstr "URLからインストール"

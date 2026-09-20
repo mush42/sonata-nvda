@@ -9,3 +9,8 @@ manifest.ini
 *.nvda-addon
 .sconsign.dblite
 /[0-9]*.[0-9]*.[0-9]*.json
+.venv/
+.idea
+
+addon/synthDrivers/sonata_neural_voices/bin/vcruntime140*.dll
+sonata_neural_voices-*.nvda-addon
