@@ -34,11 +34,11 @@ with helpers.import_bundled_library():
     from pathlib import Path
 
 
-PIPER_VOICE_LIST_URL = f"https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/voices.json"
+PIPER_VOICE_LIST_URL = "https://huggingface.co/rhasspy/piper-voices/raw/v1.0.0/voices.json"
 PIPER_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0"
 PIPER_SAMPLES_URL_PREFIX = "https://rhasspy.github.io/piper-samples/samples"
 PIPER_VOICES_JSON_LOCAL_CACHE = os.path.join(SONATA_VOICES_DIR, "piper-voices.json")
-RT_VOICE_LIST_URL = "https://huggingface.co/datasets/mush42/piper-rt/resolve/main/voices.json"
+RT_VOICE_LIST_URL = "https://huggingface.co/datasets/mush42/piper-rt/raw/main/voices.json"
 RT_VOICE_DOWNLOAD_URL_PREFIX = "https://huggingface.co/datasets/mush42/piper-rt/resolve/main/"
 
 VOICE_INFO_REGEX = re.compile(
@@ -284,8 +284,8 @@ class PiperVoiceDownloader:
         hasher = md5()
         total_size = file.size_in_bytes
         downloaded_til_now = 0
-        with request.yield_response('GET', file.download_url) as response:
-            if response.status == 302:
+        with request.yield_response('GET', file.download_url, max_redirects=5) as response:
+            if response.status in (301, 302, 303, 307, 308):
                 file.download_url = response.getheader("Location")
                 return cls._do_download_file(file, download_dir, progress_callback)
             file_buffer = open(target_file, "wb")
@@ -402,8 +402,8 @@ class PiperRTVoiceDownloader:
     @classmethod
     def _do_download_archive(cls, download_url, voice_name, download_dir, progress_callback):
         target_file = os.path.join(download_dir, voice_name)
-        with request.yield_response('GET', download_url) as response:
-            if response.status == 302:
+        with request.yield_response('GET', download_url, max_redirects=5) as response:
+            if response.status in (301, 302, 303, 307, 308):
                 download_url = response.getheader("Location")
                 return cls._do_download_archive(download_url, voice_name, download_dir, progress_callback)
             total_size = int(response.getheader("Content-Length"))
@@ -495,14 +495,23 @@ def get_available_voices(force_online=False):
                 not_installed.append(value)
             voice_objs = PiperVoice.from_list_of_dicts(not_installed)
             return voice_objs
-    std_resp = request.get(PIPER_VOICE_LIST_URL)
+    std_resp = request.get(PIPER_VOICE_LIST_URL, max_redirects=5)
     std_resp.raise_for_status()
-    std_voices = std_resp.json()
-    rt_resp = request.get(RT_VOICE_LIST_URL)
+    try:
+        std_voices = std_resp.json()
+    except (json.JSONDecodeError, ValueError) as e:
+        log.exception(f"Failed to parse standard voices JSON from {PIPER_VOICE_LIST_URL}", exc_info=True)
+        raise RuntimeError(f"Failed to parse standard voices JSON from {PIPER_VOICE_LIST_URL}: {e}") from e
+    rt_resp = request.get(RT_VOICE_LIST_URL, max_redirects=5)
     rt_resp.raise_for_status()
+    try:
+        rt_voices = rt_resp.json()
+    except (json.JSONDecodeError, ValueError) as e:
+        log.exception(f"Failed to parse RT voices JSON from {RT_VOICE_LIST_URL}", exc_info=True)
+        raise RuntimeError(f"Failed to parse RT voices JSON from {RT_VOICE_LIST_URL}: {e}") from e
     rt_voice_names = {
         vdata["base"]
-        for vdata in rt_resp.json().values()
+        for vdata in rt_voices.values()
     }
     voice_list = {}
     for vname, vdata in std_voices.items():
